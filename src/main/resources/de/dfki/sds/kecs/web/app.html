@@ -1,0 +1,3170 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+
+        <link href="/css/bootstrap.css" rel="stylesheet" />
+        <link href="/css/all.min.css" rel="stylesheet" />
+        <link href="/css/jquery-ui.css" rel="stylesheet" />
+        <link href="/css/loader.css" rel="stylesheet" />
+        <link href="/css/link.css" rel="stylesheet" />
+
+        <script src="/js/jquery.min.js"></script>
+        <script src="/js/jquery-ui.min.js"></script>
+        <script src="/js/bootstrap.min.js" ></script>
+        <script src="/js/vue.js" ></script>
+        <script src="/js/vue-i18n.js" ></script>
+        <script src="/js/chart.js" ></script>
+
+        <link rel="shortcut icon" href="/favicon.ico">
+        <title></title>
+    </head>
+    <body>
+        
+        <style>
+            .negative-readonly {
+                background-color: #f8d7da !important;
+            }
+            .nav-smaller-font {
+                font-size: 13px !important;
+            }
+            .selected-child {
+                background-color: #f8f9fa;
+            }
+            .active-filter {
+                border: 1px solid #007bff !important;
+                background-color: #eef6ff !important;
+            }
+        </style>
+
+        <div class="container-fluid" id="app" @click="appClicked($event)" v-on:keydown="appKeyDown($event)">
+            <div class="row">
+                <div class="col-4">
+                    <ul class="nav nav-tabs flex-nowrap nav-smaller-font" :key="tabsKey">
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: leftTabIndex == 0 }" @click="switchLeftTab(0)"><i class="fa fa-folder"></i> {{$t("tab.explorer")}}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-nowrap" href="#" :class="{ active: leftTabIndex == 1 }" @click="switchLeftTab(1)">
+                                <i class="fa fa-compress-arrows-alt"></i>
+                                {{$t("tab.unification")}}
+                                <span class="alert-success font-weight-bold" v-if="$refs.mergeComponent && $refs.mergeComponent.count > 0">({{$refs.mergeComponent.count}})</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-nowrap" href="#" :class="{ active: leftTabIndex == 2 }" @click="switchLeftTab(2)">
+                                <i class="fa fa-shapes"></i> 
+                                {{$t("tab.typing")}}  
+                                <span class="alert-success font-weight-bold"  v-if="$refs.typingComponent && $refs.typingComponent.count > 0">({{$refs.typingComponent.count}})</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: leftTabIndex == 3 }" @click="switchLeftTab(3)">
+                              <i class="fa fa-tree"></i> 
+                              {{$t("tab.taxonomy")}} 
+                              <span class="alert-success font-weight-bold" v-if="$refs.taxonomyComponent && $refs.taxonomyComponent.count > 0">({{$refs.taxonomyComponent.count}})</span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: leftTabIndex == 4 }" @click="switchLeftTab(4)">
+                              <i class="fa fa-project-diagram"></i> 
+                              {{$t("tab.relations")}}
+                              <span class="alert-success font-weight-bold" v-if="$refs.relationsComponent && $refs.relationsComponent.count > 0">({{$refs.relationsComponent.count}})</span>
+                          </a>
+                        </li>
+                    </ul>
+                    
+                    <file-component v-show="leftTabIndex == 0" ref="fileComponent"></file-component>
+                    <suggestion-component v-show="leftTabIndex == 1" type="merge" ref="mergeComponent"></suggestion-component>
+                    <suggestion-component v-show="leftTabIndex == 2" type="typing" ref="typingComponent"></suggestion-component>
+                    <suggestion-component v-show="leftTabIndex == 3" type="taxonomy" ref="taxonomyComponent"></suggestion-component>
+                    <suggestion-component v-show="leftTabIndex == 4" type="relations" ref="relationsComponent"></suggestion-component>
+                    
+                </div>
+                <div class="col-4">
+                    <ul class="nav nav-tabs flex-nowrap nav-smaller-font">
+                        <li class="nav-item text-nowrap">
+                            <span class="nav-link active"><i class="fa fa-hashtag"></i> 
+                                {{$t("tab.tags")}} 
+                                <span v-if="$refs.conceptComponentLeft && $refs.conceptComponentLeft.result">({{$refs.conceptComponentLeft.result.total}})</span>
+                            </span>
+                        </li>
+                        <li class="nav-item form-row justify-content-center" style="margin: 2px">
+                            <label class="col-auto col-form-label-sm">Drag&amp;Drop:</label>
+                            <select class="form-control form-control-sm col-sm" style="min-width: 50px;" v-model="predicate" @change="predicateChanged">
+                                <option value="">{{$t("predicate.choose")}}</option>
+                                <option value="http://www.w3.org/2004/02/skos/core#broader">{{$t("predicate.narrower_broader")}}</option>
+                                <option v-for="prop in properties" :value="prop.uri">{{prop.prefLabel}}</option>
+                            </select>
+                        </li>
+                        <li class="nav-item nav-link" style="white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">
+                            <span v-if="wait" style="width: 1rem; height: 1rem;" class="spinner-grow"></span>
+                            <span v-if="!wait" class="text-muted" >{{$t("tab.saved")}}</span>
+                        </li>
+                    </ul>
+                    <concept-component ref="conceptComponentLeft" merge-button show-title></concept-component>
+                </div>
+                <div class="col-4">
+                    <ul class="nav nav-tabs flex-nowrap nav-smaller-font">
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: tabIndex == 0 }" @click="switchTab(0)"><i class="fa fa-hashtag"></i> 
+                              {{$t("tab.tags")}}
+                              <span v-if="$refs.conceptComponentRight && $refs.conceptComponentRight.result">({{$refs.conceptComponentRight.result.total}})</span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: tabIndex == 1 }" @click="switchTab(1)"><i class="fa fa-search"></i> {{$t("tab.search")}}</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: tabIndex == 2 }" @click="switchTab(2)"><i class="fa fa-shapes"></i> {{$t("tab.ontology.title")}}</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link text-nowrap" href="#" :class="{ active: tabIndex == 3 }" @click="switchTab(3)"><i class="fa fa-info-circle"></i> {{$t("tab.status")}} <i class="fa fa-sync"></i></a>
+                        </li>
+                    </ul>
+                    
+                    <concept-component v-show="tabIndex == 0" ref="conceptComponentRight"></concept-component>
+                    <explorer-search-component v-show="tabIndex == 1" ref="explorerSearch"></explorer-search-component>
+                    <div v-show="tabIndex == 2">
+                        <div style="height: calc((100vh - 100px)*0.5); overflow-y: auto;">
+                            <h4><i class="fa fa-shapes"></i> {{$t("tab.ontology.classes")}}</h4>
+                            <type-component ref="typeComponent"></type-component>
+                        </div> 
+                        <div style="height: calc((100vh - 100px)*0.5); overflow-y: auto; margin-top: 15px;">
+                            <h4><i class="fa fa-long-arrow-alt-right"></i> {{$t("tab.ontology.properties")}}</h4>
+                            <property-component ref="propertyComponent"></property-component>
+                        </div>
+                        <!-- TODO later -->
+                        <!--div style="height: calc((100vh - 120px)*0.05); overflow-y: auto; margin-top: 10px;">
+                            <input type="file" class="form-control-file">
+                        </div -->
+                    </div>
+                    <status-component v-show="tabIndex == 3" ref="statusComponent"></status-component>
+                    
+                </div>
+            </div>
+        </div>
+
+        
+        <script type="text/x-template" id="file-component-template"> 
+            <div>
+                <!-- h3>Datei-Explorer 
+                </h3 -->
+                <small class="text-muted"> 
+                    <input type="checkbox" v-model="showTerms"> {{$t("file.show_keywords")}} &nbsp;
+                    <input type="checkbox" v-model="showConcepts"> {{$t("file.show_tags")}} &nbsp;
+                    <input type="checkbox" v-model="showNegativeButtons"> {{$t("file.show_negButtons")}}
+                </small>
+                
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <button class="btn btn-outline-secondary" type="button" @click="getHome()"><i class="fa fa-home"></i></button>
+                    </div>
+                    <div class="input-group-prepend">
+                        <button :disabled="!(fileResult && fileResult.parentOfParent)" class="btn btn-outline-secondary" type="button" @click="getChildren(fileResult.parentOfParent, true)"><i class="fa fa-arrow-left"></i></button>
+                    </div>
+                    <div class="input-group-prepend">
+                        <button :disabled="true" class="btn btn-outline-secondary" type="button"><i class="fa fa-arrow-right"></i></button>
+                    </div>
+                    <div class="input-group-prepend">
+                        <button :disabled="!(fileResult && fileResult.parentOfParent)" class="btn btn-outline-secondary" type="button" @click="getChildren(fileResult.parentOfParent, true)"><i class="fa fa-arrow-up"></i></button>
+                    </div>
+                    <input type="text" class="form-control form-control-sm" v-model="filePath" v-on:keyup.enter="getChildren()" readonly>
+                    
+                    <div class="input-group-append" v-if="showTerms && showNegativeButtons">
+                        <button type="button" class="btn btn-outline-danger btn-sm" @click="assertAllEntries('Negative')" :disabled="fileResult && fileResult.children.length == 0">
+                            <i class="fa fa-thumbs-down"></i> <i class="fa fa-list"></i>
+                        </button>
+                    </div>
+                    <div class="input-group-append" v-if="showTerms">
+                        <button  class="btn btn-outline-success btn-sm" @click="commitAll()">
+                            <i class="fa fa-save"></i>&nbsp;<i class="fa fa-list"></i> {{$t("file.apply_all")}}
+                        </button>
+                    </div>
+                </div>
+                <table class="table table-bordered" style="margin: 0;" v-if="fileResult && fileResult.parentOfParent" >
+                    <tr>
+                        <td style="cursor: pointer;" @click="getChildren(fileResult.parentOfParent, true)">
+                            <span class="link"><i class="fa fa-level-up-alt"></i> ..</span>
+                        </td>
+                    </tr>
+                </table>
+                <div style="height: calc(100vh - 130px); overflow-y: scroll;" ref="fileTable">
+                    <table class="table table-bordered" v-if="fileResult" >
+                        <tbody>
+                            <tr v-for="ch in fileResult.children" v-on:dragover="allowDrop" v-on:drop="drop($event, ch)">
+                                <td :id="ch.uri">
+                                    <span v-if="!ch.isFile" class="link" @click="getChildren(ch.uri, false)"><i class="fa fa-folder"></i> {{ch.prefLabel}}</span>
+                                    <span v-if="ch.isFile"><i class="fa fa-file"></i> {{ch.prefLabel}}</span>
+                                    
+                                    <div class="btn-group float-right" v-if="showTerms">
+                                        <button v-if="showNegativeButtons" type="button" class="btn btn-outline-danger btn-sm" @click="assertAllEntries('Negative', ch)" @contextmenu.prevent="assertAllEntries('Negative', ch, true)">
+                                            <i class="fa fa-thumbs-down"></i> <i class="fa fa-list"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success " @click="commit(ch)">
+                                            <i class="fa fa-save"></i> {{$t("file.apply")}}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- terms -->
+                                    <div v-if="ch.terms && showTerms" style="margin-top: 10px">
+                                        <div class="form-row align-items-center" v-for="section in [ ch.terms.Positive , ch.terms.Undecided , ch.terms.Negative ]" style="margin-top: 3px">
+                                            <div class="col-auto" v-for="entry, index in section">
+                                                <div class="input-group" v-if="!(entry.merge)">
+                                                    
+                                                    <div class="input-group-prepend" v-if="!(entry.rating == 'Negative')">
+                                                        <button class="btn btn-outline-danger btn-sm" type="button" @click="termFeedback(ch, entry, 'Negative')">
+                                                            <i class="fa fa-thumbs-down"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="input-group-prepend" v-if="!(entry.rating == 'Positive')">
+                                                        <button class="btn btn-outline-success btn-sm" type="button" @click="termFeedback(ch, entry, 'Positive')">
+                                                            <i class="fa fa-thumbs-up"></i>
+                                                        </button>
+                                                    </div>
+                                                
+                                                    <span class="form-control form-control-sm"
+                                                    :class="{ 'alert-success': entry.rating == 'Positive',
+                                                              'alert-danger': entry.rating == 'Negative', 
+                                                              'font-weight-bold': entry.intelligence == 'NI' }" 
+                                                      >{{entry.statement.containsDomainTerm}}</span> 
+                                                    
+                                                </div>
+                                                <button v-if="entry.merge" class="btn btn-sm btn-outline-dark" @click="merge(ch, section[index-1], section[index+1])">
+                                                    <i class="fa fa-compress-arrows-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- concepts -->
+                                    <div v-if="ch.concepts && showConcepts" style="margin-top: 15px">
+                                        <div class="form-row align-items-center" v-for="section in [ ch.concepts.Positive , ch.concepts.Undecided , ch.concepts.Negative ]" style="margin-top: 3px">
+                                            <div class="col-auto" v-for="entry, index in section">
+                                                <div class="input-group" v-if="!(entry.merge)">
+                                                
+                                                    <div class="input-group-prepend" v-if="!(entry.intelligence == 'NI' && entry.rating == 'Negative')">
+                                                        <button class="btn btn-outline-danger btn-sm" type="button" @click="conceptFeedback(ch, entry, 'Negative')">
+                                                            <i class="fa fa-thumbs-down"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="input-group-prepend" v-if="!(entry.intelligence == 'NI' && entry.rating == 'Positive')">
+                                                        <button class="btn btn-outline-success btn-sm" type="button" @click="conceptFeedback(ch, entry, 'Positive')">
+                                                            <i class="fa fa-thumbs-up"></i>
+                                                        </button>
+                                                    </div>
+                                                
+                                                    <span class="form-control form-control-sm link"
+                                                    :class="{ 'alert-success': entry.rating == 'Positive',
+                                                              'alert-danger': entry.rating == 'Negative', 
+                                                              'font-weight-bold': entry.intelligence == 'NI' }" 
+                                                      @click="browseConcept(entry.statement.topic)"
+                                                      ><i class="fa fa-hashtag"></i>{{entry.targetPrefLabel}}</span>
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div> 
+        </script>
+            
+        
+        <script type="text/x-template" id="concept-component-template">
+            <div>
+                <small class="text-muted">
+                    <input type="checkbox" v-model="alsoNegative" @change="search()"> {{$t("concept.show_neg")}}
+                </small>
+                <div :style="{ height: (concept == null ? `calc((100vh - 120px))` : `calc((100vh - 120px) * 0.33)`) }" style="overflow-y: auto;">
+                    <table class="table table-bordered">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>
+                                    <div class="input-group"> 
+                                        <input :class="{ 'active-filter': conceptName != '' }" class="form-control form-control-sm" v-model="conceptName" :placeholder="$t('concept.name_filter')" v-on:keyup.enter="search()">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-dark btn-sm" @click="resetConceptName('')"><i class="fa fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="input-group">
+                                        <input :class="{ 'active-filter': conceptType != '' }" class="form-control form-control-sm" v-model="conceptType" :placeholder="$t('concept.type_filter')"  list="conceptTypes" v-on:keyup.enter="search()" @change="search()">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-dark btn-sm" @click="resetConceptType('')"><i class="fa fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                    <datalist id="conceptTypes">
+                                        <option v-for="type in $parent.types">{{type.prefLabel}}</option>
+                                    </datalist>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody v-if="result && result.concepts">
+                            <tr v-for="cr in result.concepts">
+                                <td>
+                                    <table>
+                                        <tr>
+                                            <td style="border: none !important; margin: 0; padding: 2; padding-right: 0;">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-outline-danger btn-sm" type="button" @click="conceptFeedback(cr, 'Negative')"
+                                                        :disabled="cr.assertion.intelligence == 'NI' && cr.assertion.rating == 'Negative'">
+                                                        <i class="fa fa-thumbs-down"></i></button>
+                                                    <button class="btn btn-outline-success btn-sm" type="button" @click="conceptFeedback(cr, 'Positive')"
+                                                        :disabled="cr.assertion.intelligence == 'NI' && cr.assertion.rating == 'Positive'">
+                                                        <i class="fa fa-thumbs-up"></i></button>
+                                                </div>
+                                            </td>
+                                            <td style="white-space: nowrap; border: none !important; margin: 0; padding: 4; padding-left: 0;">
+                                                <span v-if="cr.matchesPrefLbl && cr.middle" >
+                                                    <span @click="browseConcept(cr)"
+                                                        :class="{ 'alert-success': cr.assertion.rating == 'Positive', 
+                                                        'alert-danger': cr.assertion.rating == 'Negative',
+                                                        'alert-secondary': cr.assertion.rating == 'Undecided',
+                                                        'font-weight-bold': cr.assertion.intelligence == 'NI' }"
+                                                        class="link"
+                                                        draggable="true" v-on:dragstart="dragStart($event, cr)"
+                                                        v-on:dragover="allowDrop" v-on:drop="conceptDrop($event, cr)"
+                                                        style="padding: 0.25rem 0.5rem; border-radius: 0.2rem"
+                                                    ><i class="fa fa-hashtag"></i>{{cr.left}}<span style="background-color: #ffffb2; padding-top: 3px; padding-bottom: 3px; border: 1px solid #ffffb2;">{{cr.middle}}</span>{{cr.right}}</span>
+                                                </span>
+                                                <span v-if="!(cr.matchesPrefLbl && cr.middle)" >
+                                                    <span @click="browseConcept(cr)"
+                                                        :class="{ 'alert-success': cr.assertion.rating == 'Positive', 
+                                                        'alert-danger': cr.assertion.rating == 'Negative',
+                                                        'alert-secondary': cr.assertion.rating == 'Undecided',
+                                                        'font-weight-bold': cr.assertion.intelligence == 'NI' }"
+                                                        draggable="true" v-on:dragstart="dragStart($event, cr)"
+                                                        v-on:dragover="allowDrop" v-on:drop="conceptDrop($event, cr)"
+                                                        class="link"
+                                                        style="padding: 0.25rem 0.5rem; border-radius: 0.2rem"
+                                                    ><i class="fa fa-hashtag"></i>{{cr.prefLabel}}</span>
+                                                </span>
+                                                <small v-if="!(cr.matchesPrefLbl) && cr.middle" style="">
+                                                    {{cr.left}}<span style="background-color: #ffffb2; padding-top: 3px; padding-bottom: 3px; border: 1px solid #ffffb2;">{{cr.middle}}</span>{{cr.right}}
+                                                </small>
+                                                <i class="fa fa-tree" v-if="cr.showTree && mergeButton" :title="$t('question.inTax')"></i>
+                                                <i class="fa fa-long-arrow-alt-right" v-if="cr.showArrow && mergeButton" :title="$t('question.rel')"></i>
+                                                <!--i class="fa fa-leaf" v-if="cr.showLeaf && mergeButton" title="Taxonomie Wurzel"></i -->
+                                                <span v-if="cr.showLeaf && mergeButton" :title="$t('question.taxRoot')" class="font-weight-bold" style="cursor: default;">&radic;</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <!-- span v-if="cr.type" @click="resetConceptType(cr.type.prefLabel)" class="link">{{cr.type.prefLabel}}</span -->
+                                        <select class="form-control form-control-sm"
+                                            :class="{ 'font-weight-bold': cr.type.intelligence == 'NI', 
+                                                    'alert-success': cr.type.uri !== 'http://www.w3.org/2002/07/owl#NamedIndividual',
+                                                    'alert-secondary': cr.type.uri === 'http://www.w3.org/2002/07/owl#NamedIndividual' }"
+                                            v-model="cr.type.uri"
+                                            @change="$parent.assertType(cr.uri, cr.type.uri, 'Positive', $parent.refresh)"
+                                        >
+                                            <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                                        </select>
+
+                                        <div class="input-group-append">
+                                            <button :disabled="cr.type.intelligence == 'NI'" class="btn btn-outline-success btn-sm" type="button" @click="$parent.assertType(cr.uri, cr.type.uri, 'Positive', $parent.refresh)"><i class="fa fa-thumbs-up"></i></button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="showCreateTopicButton">
+                                <td colspan="2">
+                                    <button class="btn btn-sm btn-block btn-outline-success" @click="assertNewConcept()">
+                                        {{$t("concept.new_tag")}} <i class="fa fa-hashtag"></i>{{createTopicName}} {{$t("concept.create_topic")}}
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav class="text-center nav-smaller-font" v-if="result && result.paginationMode">
+                    <ul class="pagination justify-content-center">
+                        <li v-for="page in result.pages" class="page-item link" :class="{active: page.active}">
+                            <a class="page-link" @click="switchSearchPage(page.offset)">{{page.number}}</a>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- height: calc((100vh - 120px)*0.66); -->
+                <div :style="{ height: (concept == null ? 0 : `calc((100vh - 120px) * 0.66)`) }"  style="overflow: auto; border-top: 1px solid gray; margin-top: 5px;">
+                    <div v-if="concept" style="margin: 15px;">
+                    
+                        <!-- feedback -->
+                        <div class="form-group">
+                            <div class="btn-group align-items-center">
+                                <div class="input-group-prepend" v-if="!(concept.assertion.intelligence == 'NI' && concept.assertion.rating == 'Negative')">
+                                    <button class="btn btn-outline-danger" type="button" @click="conceptFeedback(concept, 'Negative')"><i class="fa fa-thumbs-down"></i></button>
+                                </div>
+                                <div class="input-group-prepend" v-if="!(concept.assertion.intelligence == 'NI' && concept.assertion.rating == 'Positive')">
+                                    <button class="btn btn-outline-success" type="button" @click="conceptFeedback(concept, 'Positive')"><i class="fa fa-thumbs-up"></i></button>
+                                </div>
+                                <span class="input-group-text"
+                                    :class="{ 'alert-success': concept.assertion.rating == 'Positive', 
+                                           'alert-danger': concept.assertion.rating == 'Negative',
+                                           'font-weight-bold': concept.assertion.intelligence == 'NI', 
+                                           'negative-readonly': concept.assertion.rating == 'Negative'
+                                           }"
+                                    draggable="true"
+                                    v-on:dragstart="dragStart($event, concept)"
+                                    v-on:dragover="allowDrop" v-on:drop="conceptDrop($event, concept)"
+                                >
+                                {{$t("concept.tag_no")}} {{getId(concept.uri)}}
+                                </span>
+                            </div>
+                            <!--button @click="mergeFeedback()" class="btn btn-outline-secondary float-right" v-if="mergeButton && canMerge()"><i class="fa fa-arrow-left"></i> Vereinen</button -->
+                            <button @click="closeConcept()" class="btn btn-outline-secondary float-right"><i class="fa fa-times"></i></button>
+                        </div>
+
+                        <!-- prefLabel -->
+                        <div class="form-group">
+                            {{$t("concept.label_type")}}
+                            <div class="input-group"  v-for="entry, index in concept.prefLabels">
+                                <div class="input-group">
+                                    <div class="input-group-prepend" v-if="index == 0">
+                                        <button class="btn btn-outline-success btn-sm" type="button" @click="literalFeedback(concept, entry, 'prefLabel', 'Positive')"><i class="fa fa-thumbs-up"></i></button>
+                                    </div>
+                                    <input type="text" class="form-control"
+                                       :class="{ 'alert-success': entry.rating == 'Positive', 
+                                       'alert-danger': entry.rating == 'Negative',
+                                       'font-weight-bold': entry.intelligence == 'NI', 
+                                       'negative-readonly': entry.rating == 'Negative'
+                                       }"
+                                       v-model="entry.statement.prefLabel"
+                                       v-on:keyup.enter="literalFeedback(concept, entry, 'prefLabel', 'Positive')"
+                                       :readonly="entry.rating == 'Negative'"
+                                       >
+                                    <!-- type -->
+                                    <div class="input-group-append" v-if="index == 0">
+                                        <select class="form-control"
+                                            :class="{ 'font-weight-bold': concept.typeIntelligence == 'NI', 
+                                                    'alert-success': concept.type !== 'http://www.w3.org/2002/07/owl#NamedIndividual',
+                                                    'alert-secondary': concept.type === 'http://www.w3.org/2002/07/owl#NamedIndividual' }"
+                                            v-model="concept.type"
+                                            @change="$parent.assertType(concept.uri, concept.type, 'Positive', $parent.refresh)"
+                                        >
+                                            <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group-append" v-if="index == 0">
+                                        <button class="btn btn-outline-success btn-sm" type="button" @click="$parent.assertType(concept.uri, concept.type, 'Positive', $parent.refresh)"><i class="fa fa-thumbs-up"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- hiddenLabels -->
+                        <div class="form-group">
+                            {{$t("concept.synonyms")}}
+                            <div class="input-group" v-for="entry in concept.hiddenLabels">
+                            
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <button class="btn btn-outline-danger btn-sm" type="button" @click="literalFeedback(concept, entry, 'hiddenLabel', 'Negative')"
+                                        :disabled="entry.intelligence == 'NI' && entry.rating == 'Negative'"
+                                        ><i class="fa fa-thumbs-down"></i></button>
+                                    </div>
+                                    <div class="input-group-prepend">
+                                        <button class="btn btn-outline-success btn-sm" type="button" @click="literalFeedback(concept, entry, 'hiddenLabel', 'Positive')"
+                                        :disabled="entry.intelligence == 'NI' && entry.rating == 'Positive'"
+                                        ><i class="fa fa-thumbs-up"></i></button>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm" 
+                                       :class="{ 'alert-success': entry.rating == 'Positive', 
+                                       'alert-danger': entry.rating == 'Negative',
+                                       'font-weight-bold': entry.intelligence == 'NI' }"
+                                       v-model="entry.statement.hiddenLabel"
+                                       v-on:keyup.enter="literalFeedback(concept, entry, 'hiddenLabel', 'Positive')"
+                                       >
+                                </div>
+                                
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend" v-if="concept.userEntryAltLabel">
+                                        <button class="btn btn-outline-success btn-sm" type="button" @click="additionalHiddenLabelFeedback(concept)"><i class="fa fa-thumbs-up"></i></button>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm" v-model="concept.userEntryAltLabel" :placeholder="$t('concept.additional_syn')"
+                                        v-on:keyup.enter="additionalHiddenLabelFeedback(concept)"
+                                        >
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- foaf:topic -->
+                        <div class="form-group" v-for="isTopicOfs, isTopicOfsIndex in [concept.isTopicOfsPositive, concept.isTopicOfsNegative]">
+                            {{isTopicOfsIndex == 0 ? $t("concept.accepted") : $t("concept.rejected")}} {{$t("concept.links")}} ({{isTopicOfs.total}})
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr v-for="entry in isTopicOfs.list"
+                                        :class="{ 'alert-success': entry.rating == 'Positive', 
+                                       'alert-danger': entry.rating == 'Negative' }"
+                                       style="white-space: nowrap;"
+                                    >
+                                        <td style="width: 1%">
+                                            <div class="btn-group">
+                                                <button class="btn btn-outline-danger btn-sm" type="button" @click="isTopicOfFeedback(concept, entry, 'Negative')"
+                                                    :disabled="entry.intelligence == 'NI' && entry.rating == 'Negative'">
+                                                    <i class="fa fa-thumbs-down"></i></button>
+                                                <button class="btn btn-outline-success btn-sm" type="button" @click="isTopicOfFeedback(concept, entry, 'Positive')"
+                                                    :disabled="entry.intelligence == 'NI' && entry.rating == 'Positive'">
+                                                    <i class="fa fa-thumbs-up"></i></button>
+                                            </div>
+                                        </td>
+                                        <!--td>
+                                            <span v-if="entry.parent" class="link" @click="browseFile(entry.parent.uri, false)" :class="{ 'font-weight-bold': entry.intelligence == 'NI' }">
+                                                <i class="fa fa-folder"></i> {{entry.parent.prefLabel}}
+                                            </span>
+                                        </td -->
+                                        <td>
+                                            <span class="link" :class="{ 'font-weight-bold': entry.intelligence == 'NI' }" 
+                                            @click="browseFile(entry.child.uri)"
+                                            >
+                                                <i class="fa " :class="{ 'fa-folder': !entry.child.isFile, 'fa-file': entry.child.isFile }"></i> {{entry.child.prefLabel}}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <nav class="text-center nav-smaller-font">
+                                <ul class="pagination justify-content-center">
+                                    <li v-for="page in isTopicOfs.pages" class="page-item link" :class="{active: page.active}">
+                                        <a class="page-link" @click="switchPage(isTopicOfsIndex, page.offset)">{{page.number}}</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </script>
+
+        <script type="text/x-template" id="explorer-search-template">
+            <div>
+                <div class="input-group">
+                    <input class="form-control" :placeholder="$t('search.placeholder')" v-on:keyup.enter="explorerSearch()" v-model="search">
+                    <div class="input-group-append" :title="$t('search.regex')">
+                        <button class="btn btn-outline-secondary" :class="{ 'active': regex }" @click="regex = !regex" style="font-family: monospace;">.*</button>
+                    </div>
+                    <!-- div class="input-group-append" title="Nur im derzeitigen Ordner suchen">
+                        <button class="btn btn-outline-secondary" :class="{ 'active': onlyFolder }" @click="onlyFolder = !onlyFolder"><i class="fa fa-folder"></i></button>
+                    </div -->
+                </div>
+                <div style="height: calc((100vh - 100px)*0.9); overflow: auto;">
+                    <center v-if="wait">
+                        <br/>
+                        <div class="spinner-border" role="status"></div>
+                    </center>
+                    <table class="table table-bordered" v-if="result">
+                        <tr v-for="match in result.matches">
+                            <td style="white-space: nowrap;">
+                                <input type="checkbox" v-model="match.selected">
+                                <span class="link" @click="$parent.$refs.fileComponent.browseChild(match.uri)" >
+                                    <i class="fa " :class="{ 'fa-folder': !match.isFile, 'fa-file': match.isFile }"></i> 
+                                    {{match.left}}<span style="background-color: #ffffb2; padding-top: 3px; padding-bottom: 3px; border: 1px solid #ffffb2;">{{match.middle}}</span>{{match.right}}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <p v-if="result">
+                    {{result.matches.length}} {{$tc('search.results', result.matches.length)}} ({{result.total}} {{$t("search.in_total")}})
+                    <div class="input-group" v-if="result">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">
+                                {{regex ? $t('search.single') : $t('search.multi')}}
+                            </span>
+                        </div>
+                        <select v-model="createType" class="form-control">
+                            <option value="">{{$t('search.keyword')}}</option>
+                            <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                        </select>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-success" @click="explorerSearchCreate()"><i class="fa fa-thumbs-up"></i></button>
+                        </div>
+                    </div>
+                </p>
+            </div>
+        </script>
+        
+        
+        <script type="text/x-template" id="type-component-template">
+            <div>
+                <input type="text" class="form-control form-control-sm" :placeholder="$t('type.new_class')" v-model="typeName" v-on:keyup.enter="addType()" />
+                <div> <!-- style="height: 100%; overflow-y: auto;" -->
+                    <table class="table table-bordered" v-if="result">
+                        <tr v-for="entry in result.types">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button class="btn btn-outline-danger btn-sm" type="button" @click="typeFeedback(entry, 'Negative')"
+                                    :disabled="entry.assertion.intelligence == 'NI' && entry.assertion.rating == 'Negative'"
+                                    ><i class="fa fa-thumbs-down"></i></button>
+                                </div>
+                                <div class="input-group-prepend">
+                                    <button class="btn btn-outline-success btn-sm" type="button" @click="typeFeedback(entry, 'Positive')"
+                                    :disabled="entry.assertion.intelligence == 'NI' && entry.assertion.rating == 'Positive'"
+                                    ><i class="fa fa-thumbs-up"></i></button>
+                                </div>
+                                <input type="text" class="form-control form-control-sm" 
+                                   :class="{ 'alert-success': entry.assertion.rating == 'Positive', 
+                                   'alert-danger': entry.assertion.rating == 'Negative',
+                                   'font-weight-bold': entry.assertion.intelligence == 'NI' }"
+                                   v-model="entry.prefLabelAssertion.statement.prefLabel"
+                                   v-on:keyup.enter="literalFeedback(entry.prefLabelAssertion, 'prefLabel', 'Positive')"
+                                   >
+                            </div>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </script>
+            
+        <script type="text/x-template" id="property-component-template">
+            <div>
+                <input type="text" class="form-control form-control-sm" :placeholder="$t('type.new_property')" v-model="propertyName" v-on:keyup.enter="addProperty()" />
+                <div>  <!--style="height: 100%; overflow-y: auto;"> -->
+                    <table class="table table-bordered" v-if="result">
+                        <tr v-for="entry in result.properties">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button class="btn btn-outline-danger btn-sm" type="button" @click="propertyFeedback(entry, 'Negative')"
+                                    :disabled="entry.assertion.intelligence == 'NI' && entry.assertion.rating == 'Negative'"
+                                    ><i class="fa fa-thumbs-down"></i></button>
+                                </div>
+                                <div class="input-group-prepend">
+                                    <button class="btn btn-outline-success btn-sm" type="button" @click="propertyFeedback(entry, 'Positive')"
+                                    :disabled="entry.assertion.intelligence == 'NI' && entry.assertion.rating == 'Positive'"
+                                    ><i class="fa fa-thumbs-up"></i></button>
+                                </div>
+                                <select v-model="entry.domainAssertion.statement.domain"
+                                        :class="{ 'alert-success': entry.assertion.rating == 'Positive', 
+                                        'alert-danger': entry.assertion.rating == 'Negative',
+                                        'font-weight-bold': entry.domainAssertion.intelligence == 'NI' }"
+                                        @change="domainRangeFeedback(entry.domainAssertion, 'domain')"
+                                >
+                                    <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                                </select>
+                                <input type="text" class="form-control form-control-sm text-center" 
+                                   :class="{ 'alert-success': entry.assertion.rating == 'Positive', 
+                                   'alert-danger': entry.assertion.rating == 'Negative',
+                                   'font-weight-bold': entry.assertion.intelligence == 'NI' }"
+                                   v-model="entry.prefLabelAssertion.statement.prefLabel"
+                                   v-on:keyup.enter="literalFeedback(entry.prefLabelAssertion, 'prefLabel', 'Positive')"
+                                   >
+                                <select v-model="entry.rangeAssertion.statement.range"
+                                        :class="{ 'alert-success': entry.assertion.rating == 'Positive', 
+                                        'alert-danger': entry.assertion.rating == 'Negative',
+                                        'font-weight-bold': entry.rangeAssertion.intelligence == 'NI' }"
+                                        @change="domainRangeFeedback(entry.rangeAssertion, 'range')"
+                                >
+                                    <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                                </select>
+                            </div>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </script>
+        
+        
+        <script type="text/x-template" id="suggestion-component-template">
+            <div v-if="result">
+                <div class="btn-group" style="margin-top: 2px; margin-bottom: 2px;">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="assertAllEntries('Negative')" :disabled="result.suggested.length == 0"><i class="fa fa-thumbs-down"></i> <i class="fa fa-list"></i></button>
+                    <button type="button" class="btn btn-outline-success btn-sm" @click="assertAllEntries('Positive')" :disabled="result.suggested.length == 0"><i class="fa fa-thumbs-up"></i> <i class="fa fa-list"></i></button>
+                </div>
+                <div style="height: calc((100vh - 170px)*0.33); overflow-y: auto;">
+                    <table class="table table-bordered" :key="updateKey">
+                        <tbody>
+                            <tr v-for="entry in result.suggested" class="alert-success">
+                                <td style="width: 1%">
+                                    <div class="btn-group">
+                                        <button class="btn btn-outline-danger btn-sm" type="button" @click="assertEntry(entry, 'Negative')"
+                                            :disabled="entry.intelligence == 'NI' && entry.rating == 'Negative'">
+                                            <i class="fa fa-thumbs-down"></i></button>
+                                        <button class="btn btn-outline-success btn-sm" type="button" @click="assertEntry(entry, 'Positive')"
+                                            :disabled="entry.intelligence == 'NI' && entry.rating == 'Positive'">
+                                            <i class="fa fa-thumbs-up"></i></button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="link" @click="browseConcept('left', entry.uris.subject)"><i class="fa fa-hashtag"></i>{{entry.prefLabels.subject}}</span>
+                                    <span v-if="type == 'merge'" class="text-muted" style="white-space: nowrap;">({{$t("suggestion.number")}} {{getId(entry.uris.subject)}})</span>
+                                </td>
+                                <td v-if="type == 'relations'">
+                                    {{entry.prefLabels.predicate}}
+                                </td>
+                                <td v-if="type == 'taxonomy'" style="width: 1%">
+                                    <i class="fa fa-less-than" :title="$t('predicate.narrower_broader')"></i>
+                                </td>
+                                <td v-if="type == 'merge'" style="width: 1%; white-space: nowrap;">
+                                    <i v-if="type == 'merge'" class="fa fa-arrow-left"></i>
+                                    &nbsp;
+                                    <button class="btn btn-outline-secondary btn-sm" v-if="type == 'merge'" @click="exchange(entry)"><i class="fa fa-exchange-alt"></i></button>
+                                </td>
+                                <td v-if="type == 'typing'">
+                                    <select style="border: 1px solid gray;" class="form-control form-control-sm alert-success"
+                                            v-model="entry.uris.object"
+                                            @change="$parent.assertType(entry.uris.subject, entry.uris.object, 'Positive', $parent.refresh)"
+                                    >
+                                        <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                                    </select>
+                                </td>
+                                <td v-if="type != 'typing'">
+                                    <span class="link" @click="browseConcept('right', entry.uris.object)"><i class="fa fa-hashtag"></i>{{entry.prefLabels.object}}</span>
+                                    <span v-if="type == 'merge'" class="text-muted" style="white-space: nowrap;">(Nr. {{getId(entry.uris.object)}})</span>
+                                </td>
+                                <td>
+                                    {{(entry.confidence * 100).toFixed(0) + '%'}}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!--div class="row" style="margin-top: 5px; margin-bottom: 5px; padding: 5px; white-space: nowrap;">
+                    <div class="col-1">
+                        <button class="btn btn-outline-success" type="button" @click="assertNewEntry()">
+                            <i class="fa fa-thumbs-up"></i>
+                        </button>
+                    </div>
+                    <div class="col">
+                        <span v-if="$parent.$refs.conceptComponentLeft.concept">
+                            <i class="fa fa-hashtag"></i>{{$parent.$refs.conceptComponentLeft.concept.prefLabel}}
+                        </span>
+                    </div>
+                    <div class="col-auto" v-if="type == 'relations'">
+                        <select class="form-control form-control-sm" v-model="predicate">
+                            <option v-for="prop in $parent.properties" :value="prop.uri">{{prop.prefLabel}}</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select class="form-control form-control-sm" v-if="type == 'typing'" v-model="objectType">
+                            <option v-for="type in $parent.types" :value="type.uri">{{type.prefLabel}}</option>
+                        </select>
+                        <span v-if="type != 'typing' && $parent.$refs.conceptComponentRight.concept">
+                            <i v-if="type == 'merge'" class="fa fa-arrow-left"></i>
+                            <i class="fa fa-hashtag"></i>{{$parent.$refs.conceptComponentRight.concept.prefLabel}}
+                        </span>
+                    </div>
+                </div -->
+                
+                <div style="height: calc((100vh - 170px)*0.33); border-top: 1px solid gray; margin-top: 5px;">
+                    
+                    <div style="overflow-y: auto; height: 100%">
+                        <table class="table table-bordered" :key="updateKey">
+                            <tbody>
+                                <tr v-for="entry in result.accepted" class="alert-success font-weight-bold">
+                                    <td style="width: 1%">
+                                        <div class="btn-group">
+                                            <button class="btn btn-outline-danger btn-sm" type="button" @click="assertEntry(entry, 'Negative')">
+                                                <i class="fa fa-thumbs-down"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="link font-weight-bold" @click="browseConcept('left', entry.uris.subject)"><i class="fa fa-hashtag"></i>{{entry.prefLabels.subject}}</span>
+                                    </td>
+                                    <td v-if="type == 'relations'" class="font-weight-bold">
+                                        {{entry.prefLabels.predicate}}
+                                    </td>
+                                    <td v-if="type == 'taxonomy'" style="width: 1%">
+                                        <i class="fa fa-less-than" :title="$t('predicate.narrower_broader')"></i>
+                                    </td>
+                                    <td v-if="type == 'typing'">
+                                        {{entry.prefLabels.object}}
+                                    </td>
+                                    <td v-if="type != 'typing'">
+                                        <span class="link font-weight-bold" @click="browseConcept('right', entry.uris.object)"><i class="fa fa-hashtag"></i>{{entry.prefLabels.object}}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </div>
+                <nav class="text-center nav-smaller-font">
+                    <!--span class="float-left" style="padding: 0.5rem;">({{result.acceptedPagination.total}} Einträge)</span-->
+                    <ul class="pagination justify-content-center" style="margin-bottom: 2px; margin-top: 2px;">
+                        <li v-for="page in result.acceptedPagination.pages" class="page-item link" :class="{active: page.active}">
+                            <a class="page-link" @click="switchPage('offsetP', page.offset)">{{page.number}}</a>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <div style="height: calc((100vh - 170px)*0.33); overflow-y: auto; border-top: 1px solid gray; margin-top: 5px;">
+                    <table class="table table-bordered" :key="updateKey">
+                        <tbody>
+                            <tr v-for="entry in result.declined" class="alert-danger font-weight-bold">
+                                <td style="width: 1%">
+                                    <div class="btn-group">
+                                        <button class="btn btn-outline-success btn-sm" type="button" @click="assertEntry(entry, 'Positive')">
+                                            <i class="fa fa-thumbs-up"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="link font-weight-bold" @click="browseConcept('left', entry.uris.subject)"><i class="fa fa-hashtag"></i>{{entry.prefLabels.subject}}</span>
+                                </td>
+                                <td v-if="type == 'relations'">
+                                    {{entry.prefLabels.predicate}}
+                                </td>
+                                <td v-if="type == 'taxonomy'" style="width: 1%">
+                                    <i class="fa fa-less-than" :title="$t('predicate.narrower_broader')"></i>
+                                </td>
+                                <td v-if="type == 'typing'">
+                                    {{entry.prefLabels.object}}
+                                </td>
+                                <td v-if="type == 'merge'" style="width: 1%">
+                                    <i v-if="type == 'merge'" class="fa fa-arrow-left"></i>
+                                </td>
+                                <td v-if="type != 'typing'">
+                                    <span class="link font-weight-bold" @click="browseConcept('right', entry.uris.object)"><i class="fa fa-hashtag"></i>{{entry.prefLabels.object}}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                </div>
+                
+                <nav class="text-center nav-smaller-font">
+                    <!--span class="float-left" style="padding: 0.5rem;">({{result.declinedPagination.total}} Einträge)</span-->
+                    <ul class="pagination justify-content-center" style="margin-bottom: 2px; margin-top: 2px;">
+                        <li v-for="page in result.declinedPagination.pages" class="page-item link" :class="{active: page.active}">
+                            <a class="page-link" @click="switchPage('offsetN', page.offset)">{{page.number}}</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </script>
+        
+        <script type="text/x-template" id="status-component-template">
+            <div>
+                <div style="height: calc(100vh - 50px); overflow-y: scroll;">
+                
+                    <div v-if="result == null">
+                        <center>
+                            <br/>
+                            <div class="spinner-border" role="status"></div>
+                        </center>
+                    </div>
+
+                    <div v-if="result != null">
+                        <p>
+                        {{ $t('status.general', {duration: result.duration, time: result.time}) }}
+                        </p>
+
+                        <h5><i class="fa fa-hashtag"></i> {{$t("status.tagging")}} {{prop2str(result.conceptDiscoveryMetric) + '%'}}</h5>
+                        <div class="progress" style="width: 50%">
+                            <div class="progress-bar" role="progressbar" :style="{ width: (result.conceptDiscoveryMetric * 100) + '%' }"></div>
+                        </div>
+                        <p>
+                        <span v-html="$t('status.tagging_desc', {positiveTopics: result.positiveTopics, positiveTerms: result.positiveTerms, proportion: prop2str(result.conceptDiscoveryMetric)})"></span>
+                        <span v-if="result.conceptDiscoveryNextFile">
+                            {{$t('tagging_missing')}}<br/>
+                            <span class="link" @click="$parent.$refs.fileComponent.browseChild(result.conceptDiscoveryNextFile.uri)" style="white-space: nowrap;">
+                                <i class="fa " :class="{ 'fa-folder': !result.conceptDiscoveryNextFile.isFile, 'fa-file': result.conceptDiscoveryNextFile.isFile }"></i> 
+                                {{result.conceptDiscoveryNextFile.name}}
+                            </span>
+                        </span>
+                        </p>
+
+                        <h5><i class="fa fa-shapes"></i> {{$t('status.typing')}} {{(result.ontologyPopulationMetric * 100).toFixed(0) + '%'}}</h5>
+                        <div class="progress" style="width: 50%">
+                            <div class="progress-bar" role="progressbar" :style="{ width: (result.ontologyPopulationMetric * 100) + '%' }"></div>
+                        </div>
+                        <p>
+                        <span v-html="$t('status.typing_desc', {positiveTypes: result.positiveTypes, positiveConcepts: result.positiveConcepts, proportion: (result.ontologyPopulationMetric * 100).toFixed(0)})"></span>
+                        <br/>
+                        <span class="link" @click="showUntyped()" v-if="result.ontologyPopulationMetric != 1">{{$t('status.typing_missing')}}</span>
+                        </p>
+
+                        <h5><i class="fa fa-tree"></i> {{$t('status.taxonomy')}} {{(result.taxonomyMetric * 100).toFixed(0) + '%'}}</h5>
+                        <div class="progress" style="width: 50%">
+                            <div class="progress-bar" role="progressbar" :style="{ width: (result.taxonomyMetric * 100) + '%' }"></div>
+                        </div>
+                        <p>
+                            <span v-html="$t('status.taxonomy_desc2', {taxComponents: result.taxComponents, taxVertices: result.taxVertices, proportion: (result.taxConnectedness * 100).toFixed(0)})"></span><br/>
+                            <span v-html="$t('status.taxonomy_desc1', {taxBroader: result.taxBroader, taxConcepts: result.taxConcepts, proportion: (result.taxGeneralization * 100).toFixed(0)})"></span>
+                        <br/>
+                        <span v-if="result.taxonomyMetric != 1 && result.taxConcepts > 0">
+                            <span class="link" @click="$parent.changePredicateTaxonomy()">{{$t('status.taxonomy_help')}}</span>
+                            {{$t('status.or')}}
+                        </span>
+                        <a href="/visual/taxonomy" target="_blank">{{$t('status.taxonomy_show')}}</a>
+                        </p>
+
+                        <h5><i class="fa fa-project-diagram"></i> {{$t('status.nontax')}} {{(result.nonTaxonomicMetric * 100).toFixed(0) + '%'}}</h5>
+                        <div class="progress" style="width: 50%">
+                            <div class="progress-bar" role="progressbar" :style="{ width: (result.nonTaxonomicMetric * 100) + '%' }"></div>
+                        </div>
+                        <p>
+                            <span v-html="$t('status.nontax_desc1', {nonTaxComponents: result.nonTaxComponents, nonTaxVertices: result.nonTaxVertices, proportion: (result.nonTaxConnectedness * 100).toFixed(0)})"></span><br/>
+                            <span v-html="$t('status.nontax_desc2', {nonTaxDiameter: result.nonTaxDiameter, proportion: (result.nonTaxCloseness * 100).toFixed(0)})"></span>
+                        <br/>
+                        <a href="/visual/graph" target="_blank">{{$t('status.nontax_show')}}</a>
+                        </p>
+
+                        <h5><i class="fa fa-chart-line"></i> {{$t('status.overall')}} {{prop2str(result.overallRating) + '%'}}</h5>
+                        <div class="progress" style="width: 50%">
+                            <div class="progress-bar" role="progressbar" :style="{ width: (result.overallRating * 100) + '%' }"></div>
+                        </div>
+                        <br/>
+
+                        <h5><i class="fa fa-mouse-pointer"></i> {{$t('status.effort')}}</h5>
+                        <p>
+                            {{$t('status.effort_desc', { 'effortClick': result.effortClick, 'effortKeydown': result.effortKeydown, 'effortInteractions': result.effortInteractions })}}
+                        </p>
+
+                        <h5><i class="fa fa-user"></i> {{$t('status.user')}}</h5>
+                        <p>
+                            {{$t('status.user_desc', { 'username': result.username })}}
+                        </p>
+
+                        <h5><i class="fa fa-folder"></i> {{$t('status.explorer')}}</h5>
+                        <p>
+                            {{$t('status.explorer_desc', { 'branchCount': result.branchCount, 'leafCount': result.leafCount, 'sum': result.branchCount + result.leafCount })}} 
+                        </p>
+                        
+                        <h5><i class="fa fa-tachometer-alt"></i> {{$t('status.ram')}}</h5>
+                        <p>
+                            {{$t('status.ram_desc', { 'memoryUsed': decimalPointFix(result.memoryUsed), 'memoryTotal': decimalPointFix(result.memoryTotal), 'memoryMax': decimalPointFix(result.memoryMax) })}} 
+                        </p>
+                        
+                        <h5><i class="fa fa-download"></i> Download</h5>
+                        <p>
+                            <a href="/download/terminology.ttl" target="_blank"><i class="fa fa-file"></i> terminology.ttl</a>, 
+                            <a href="/download/assertions.ttl" target="_blank"><i class="fa fa-file"></i> assertions.ttl</a>,
+                            <a href="/download/topic-statements.ttl" target="_blank"><i class="fa fa-file"></i> topic-statements.ttl</a>
+                        </p>
+                    </div>
+
+                    <div>
+                        <canvas id="myChart"></canvas>
+                    </div>
+                    
+                    <h5>
+                        <i class="fa fa-language"></i>:
+                        <img @click="$parent.changeLanguage('semweb')" src="/img/semweb.png" style="height: 14px;" class="link"/>
+                        &nbsp;
+                        <img @click="$parent.changeLanguage('en')" src="/img/en.png" style="height: 14px;" class="link"/>
+                        &nbsp;
+                        <img @click="$parent.changeLanguage('de')" src="/img/de.png" style="height: 14px;" class="link"/>
+                    </h5>
+                </div>
+            </div>
+        </script>
+
+        <script>
+Vue.component('file-component', {
+    template: '#file-component-template',
+    data() {
+        return { 
+            showTerms: true,
+            showConcepts: true,
+            showNegativeButtons: false,
+
+            fileUri: '',
+            filePath: '',
+            fileResult: null,
+            
+            scrollStack: []
+        };
+    },
+    created: function() {
+        this.getChildren();
+    },
+    methods: {
+        refresh: function() {
+            this.getChildren();            
+        },
+        getChildren: function (parent, jumpBack) {
+            var vue = this;
+            
+            var tbl = this.$refs.fileTable;
+            if(tbl) {
+                if(jumpBack === false) {
+                    this.scrollStack.push(tbl.scrollTop);
+                }
+            }
+
+            if (parent) {
+                this.fileUri = parent;
+            }
+
+            var data = {
+                parent: this.fileUri
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/getChildren',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.filePath = data.parent.path;
+                    vue.fileUri = data.parent.uri;
+                    vue.sortTerms(data);
+                    vue.fileResult = data;
+                    
+                    //after render set scroll
+                    vue.$nextTick(() => {
+                        $(".selected-child").removeClass("selected-child");
+                        
+                        if(jumpBack && tbl && vue.scrollStack.length > 0) {
+                            tbl.scrollTop = vue.scrollStack.pop();
+                        } else if(tbl && parent) {
+                            //parent is given
+                            tbl.scrollTop = 0;
+                        }
+                    });
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.$parent.exception = request.responseText;
+                }
+            });
+        },
+        browseChild: function (childUri) {
+            this.scrollStack = [];
+            
+            var vue = this;
+
+            var data = {
+                child: childUri
+            };
+
+            this.$parent.switchLeftTab(0);
+
+            $.ajax({
+                type: 'POST',
+                url: '/browseChild',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.filePath = data.parent.path;
+                    vue.fileUri = data.parent.uri;
+                    vue.sortTerms(data);
+                    vue.fileResult = data;
+                    
+                    vue.$nextTick(() => {
+                        var childElem = document.getElementById(childUri);
+                        var tbl = vue.$refs.fileTable;
+                        
+                        //reset
+                        $(".selected-child").removeClass("selected-child");
+                        
+                        if(tbl && childElem) {
+                            //scroll to it
+                            tbl.scrollTop = childElem.offsetTop;
+                            //highlight
+                            childElem.classList.add("selected-child");
+                        }
+                    });
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.$parent.exception = request.responseText;
+                }
+            });
+        },
+        sortTerms: function(data) {
+            if(!data)
+                return;
+            
+            for(var child of data.children) {
+                for(var section of [ child.terms.Positive , child.terms.Undecided , child.terms.Negative ]) {
+                    
+                    if(section === child.terms.Positive) {
+                        this.removeMerger(section);
+                    }
+                    
+                    this.sortArray(child, section);
+                    
+                    if(section === child.terms.Positive) {
+                        this.addMerger(section);
+                    }
+                }
+            }
+        },
+        getHome: function() {
+            //with empty string we browse root again
+            this.fileUri = '';
+            this.getChildren();
+        },
+        commit: function(child) {
+            
+            var assertions = [];
+            
+            //all of them were reviewed by human
+            for(var array of [child.terms.Positive, child.terms.Negative]) {
+                if(array === undefined)
+                    continue;
+                
+                for(var assertion of array) {
+                    
+                    //no merge object
+                    if(assertion.merge)
+                        continue;
+                    
+                    assertion.intelligence = 'NI';
+                    assertion.name = this.$parent.username;
+                    assertion.confidence = 1.0;
+                    assertion.phase = "DomainTerminologyExtraction";
+                    
+                    assertions.push(assertion);
+                }
+            }
+            
+            //console.log(assertions);
+            
+            this.$parent.sendAssertion(assertions, this.$parent.refresh);
+            
+        },
+        commitAll: function() {
+            
+            var $parent = this.$parent;
+            
+            var counter = this.fileResult.children.length;
+            
+            //better do it child by child
+            for(var child of this.fileResult.children) {
+                
+                var assertions = [];
+                
+                //all of them were reviewed by human
+                for(var array of [child.terms.Positive, child.terms.Negative]) {
+                    if(array === undefined)
+                        continue;
+
+                    for(var assertion of array) {
+
+                        //no merge object
+                        if(assertion.merge)
+                            continue;
+
+                        assertion.intelligence = 'NI';
+                        assertion.name = this.$parent.username;
+                        assertion.confidence = 1.0;
+                        assertion.phase = "DomainTerminologyExtraction";
+
+                        assertions.push(assertion);
+                    }
+                }
+                
+                this.$parent.sendAssertion(assertions, function() { 
+                    counter--; 
+                    if(counter === 0) {
+                        $parent.refresh();
+                    }
+                });
+            }
+            
+            
+        },
+        addMerger: function(array) {
+            if(!array)
+                return;
+            
+            for(let i = array.length - 1; i > 0; i--) {
+                array.splice(i, 0, {merge: true});
+            }
+        },
+        removeMerger: function(array) {
+            if(!array)
+                return;
+            
+            array.splice(0, array.length, ...array.filter(entry => !(entry.merge)));
+        },
+        sortArray: function(child, array) {
+            
+            if(!array || array.length === 0)
+                return;
+            
+            //longest first
+            array.sort((a,b) => {
+                return b.statement.containsDomainTerm.length - a.statement.containsDomainTerm.length;
+            });
+            
+            //check every term position
+            for(var i in array) {
+                
+                var assertion = array[i];
+                
+                var hasClash;
+                var offset = 0;
+                
+                //destt
+                //01234
+                
+                do {
+                    //we assume there will be no clash
+                    hasClash = false;
+                    
+                    //get index
+                    assertion.start = child.prefLabel.indexOf(assertion.statement.containsDomainTerm, offset);
+
+                    //break if not found
+                    if(assertion.start === -1) {
+                        break;
+                    }
+                    
+                    //mark end of it (inclusive) "dest" goes from index 0 to 3 (4 letters)
+                    assertion.end = assertion.start + (assertion.statement.containsDomainTerm.length - 1);
+
+                    //check previous ones if a clash exists
+                    for(var j = 0; j < i; j++) {
+                        var pre = array[j];
+                        
+                        //skip the ones not found
+                        if(pre.start === -1) {
+                            continue;
+                        }
+
+                        //clash if overlaps
+                        if(assertion.start >= pre.start && assertion.start <= pre.end) {
+                            
+                            //console.log(JSON.stringify(assertion));
+                            //console.log("clashes with");
+                            //console.log(JSON.stringify(pre));
+                            //console.log("at offset: " + offset);
+                            
+                            //do loop again
+                            hasClash = true;
+                            //but this time with a offset after this
+                            offset = pre.end + 1;
+                        }
+                    }
+                    
+                } while(hasClash);
+            }
+            
+            //console.log(array);
+            
+            array.sort((a,b) => {
+                return a.start - b.start;
+            });
+            
+            /* 
+            array.sort((a,b) => {
+                var ai = child.prefLabel.indexOf(a.statement.containsDomainTerm);
+                var bi = child.prefLabel.indexOf(b.statement.containsDomainTerm);
+                return ai - bi;
+            });
+            */
+            
+        },
+        merge: function (child, left, right) {
+            //console.log(child.prefLabel);
+            //console.log(left.statement.containsDomainTerm);
+            //console.log(right.statement.containsDomainTerm);
+            
+            //console.log(left);
+            //console.log(right);
+
+            var s = left.start; //child.prefLabel.indexOf(left.statement.containsDomainTerm);
+            var e = right.end + 1; //child.prefLabel.indexOf(right.statement.containsDomainTerm) + right.statement.containsDomainTerm.length;
+
+            var merged = child.prefLabel.substring(s, e);
+            let stmt = JSON.parse(JSON.stringify(left.statement));
+            stmt.containsDomainTerm = merged;
+            
+            //remove merge points
+            this.removeMerger(child.terms.Positive);
+            
+            //console.log(child.terms.Positive);
+            
+            var posArray = child.terms.Positive;
+            
+            //remove left right
+            var leftPos = posArray.indexOf(left);
+
+            var positiveAssertion = {
+                "statement": stmt,
+                "rating": "Positive",
+                "intelligence": "AI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "DomainTerminologyExtraction"
+            };
+
+            //remove them and add the correct one
+            posArray.splice(leftPos, 2, positiveAssertion);
+
+            //sort by index of
+            this.sortArray(child, posArray);
+            
+            //add {merge: true} elements again
+            this.addMerger(posArray);
+
+            //-- negative --
+
+            //other are negative now
+            //for(let entry of [left, right]) {
+            //    entry.rating = 'Negative';
+            //    entry.intelligence = 'NI';
+            //}
+            
+            var negativeLeftAssertion = {
+                "statement": left.statement,
+                "rating": "Negative",
+                "intelligence": "AI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "DomainTerminologyExtraction"
+            };
+            var negativeRightAssertion = {
+                "statement": right.statement,
+                "rating": "Negative",
+                "intelligence": "AI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "DomainTerminologyExtraction"
+            };
+            
+            if(!child.terms.Negative) {
+                child.terms.Negative = [];
+            }
+            child.terms.Negative.push(negativeLeftAssertion);
+            child.terms.Negative.push(negativeRightAssertion);
+           
+            this.sortArray(child, child.terms.Negative);
+           
+            child.commitButton = true;
+
+        },
+        termFeedback: function (child, assertion, rating) {
+
+            var from = "" + assertion.rating;
+            var to = rating;
+
+            if (from !== to) {
+
+                //ensure arrays
+                if(!child.terms.Negative) {
+                    child.terms.Negative = [];
+                }
+                if(!child.terms.Positive) {
+                    child.terms.Positive = [];
+                }
+
+                var oldArr = child.terms[from];
+                var newArr = child.terms[to];
+                
+                this.removeMerger(oldArr);
+                this.removeMerger(newArr);
+                
+                //console.log("oldArr: " + JSON.stringify(oldArr));
+                //console.log("newArr: " + JSON.stringify(newArr));
+                //console.log("assertion:" + JSON.stringify(assertion));
+
+                //var fromPositive = from === 'Positive';
+
+                var i = oldArr.indexOf(assertion);
+                //if (fromPositive && oldArr.length - 1 === i) {
+                    //to remove merger
+                //    i = i - 1;
+                //}
+
+                //remove from old
+                oldArr.splice(i, 1);
+
+                //add to new one
+                //if (from === 'Negative' && to === 'Positive' && newArr.length > 0) {
+                //    newArr.push({merge: true});
+                //}
+                newArr.push(assertion);
+                
+                this.sortArray(child, oldArr);
+                this.sortArray(child, newArr);
+                
+                if(from === 'Positive') {
+                    this.addMerger(oldArr);
+                }
+                if(to === 'Positive') {
+                    this.addMerger(newArr);
+                }
+                
+            }
+
+            //change
+            assertion.intelligence = "AI"; //not NI
+            assertion.rating = rating;
+            assertion.confidence = 1.0;
+            assertion.name = this.$parent.username;
+            
+            child.commitButton = true;
+
+        },
+        browseConcept: function(uri) {
+            this.$parent.$refs.conceptComponentLeft.browseConcept({ uri: uri });
+        },
+        conceptFeedback: function(child, entry, rating) {
+            
+            var newAssertion = {
+                "statement": entry.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            this.$parent.sendAssertion(newAssertion, this.$parent.refresh);
+        },
+        allowDrop: function(event) {
+            event.preventDefault();
+        },
+        drop: function(event, node) {
+            event.preventDefault();
+            
+            this.$parent.sendEvent(event);
+            
+            var conceptUri = event.dataTransfer.getData("conceptUri");
+            
+            if(conceptUri !== '') {
+                this.topicFeedback(node.uri, conceptUri);
+            }
+        },
+        topicFeedback: function(nodeUri, conceptUri) {
+            var stmt = {
+                "@id": nodeUri,
+                "@context": {"topic": {"@id": "http://xmlns.com/foaf/0.1/topic", "@type": "@id"}},
+                "topic": conceptUri
+            };
+            
+            var positiveAssertion = {
+                "statement": stmt,
+                "rating": 'Positive',
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            this.$parent.sendAssertion(positiveAssertion, this.$parent.refresh);
+        },
+        assertAllEntries: function(rating, child, recursive) {
+            
+            if(recursive) {
+                if(confirm(i18n.t('question.recursiveReject'))) {
+                    this.assertNegativeTermsRecursively(child);
+                }
+            } else {
+                var children = child !== undefined ? [child] : this.fileResult.children;
+
+                for(var ch of children) {
+                    if(ch.terms['Positive'] === undefined)
+                        continue;
+                    
+                    while(ch.terms['Positive'].length > 0) {
+                        var assertion = ch.terms['Positive'][0];
+                        this.termFeedback(ch, assertion, rating);
+                    }
+                    this.commit(ch);
+                }
+            }
+        },
+        assertNegativeTermsRecursively: function(child) {
+            var vue = this;
+            
+            var data = {
+                fileUri: child.uri
+            };
+
+            this.$parent.wait = true;
+            $.ajax({
+                type: 'POST',
+                url: '/assertNegativeTermsRecursively',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.$parent.wait = false;
+                    vue.filePath = data.parent.path;
+                    vue.fileUri = data.parent.uri;
+                    vue.sortTerms(data);
+                    vue.fileResult = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.$parent.wait = false;
+                    vue.$parent.exception = request.responseText;
+                }
+            });
+        }
+    }
+});
+            
+Vue.component('concept-component', {
+    template: '#concept-component-template',
+    data() {
+        return {
+            conceptName: '', 
+            conceptType: '',
+            alsoNegative: false,
+            result: null,
+            concept: null,
+            offsetP: 0,
+            offsetN: 0,
+            offsetSearch: 0,
+            showCreateTopicButton: false,
+            createTopicName: ''
+        };
+    },
+    props: {
+        mergeButton: Boolean,
+        showTitle: Boolean
+    },
+    created: function() {
+        this.refresh();
+    },
+    methods: {
+        refresh: function() {
+            this.search();
+            if(this.concept) {
+                this.browseConcept(this.concept);
+            }
+            this.$parent.getPositiveTypes();
+        },
+        getId: function(uri) {
+            return uri.replace('urn:concept:', '');
+        },
+        resetConceptName: function(name) {
+            this.conceptName = name;
+            this.search();
+        },
+        resetConceptType: function(type) {
+            this.conceptType = type;
+            this.search();
+            this.$parent.changePredicate('');
+        },
+        resetBoth: function(name, type) {
+            this.conceptName = name;
+            this.conceptType = type;
+            this.search();
+        },
+        search: function() {
+            var vue = this;
+
+            //a hack: we use prefLabel to get the URI
+            var conceptTypeUri = '';
+            var filteredTypes = this.$parent.types.filter(t => t.prefLabel === this.conceptType);
+            if(filteredTypes.length > 0) {
+                conceptTypeUri = filteredTypes[0].uri;
+            } else {
+                //reset
+                this.conceptType = "";
+            }
+
+            var data = {
+                conceptName: this.conceptName,
+                conceptType: conceptTypeUri,
+                alsoNegative: this.alsoNegative,
+                offset: this.offsetSearch,
+                predicate: this.$parent.predicate
+            };
+            
+            //show create topic button if name is set and skos:Concept
+            this.createTopicName = '';
+            this.showCreateTopicButton = 
+                    this.conceptName !== '' && 
+                    conceptTypeUri === 'http://www.w3.org/2004/02/skos/core#Concept';
+
+            if(this.showCreateTopicButton) {
+                this.createTopicName = this.conceptName;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '/searchConcepts',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.result = data;
+                    //if(vue.result.concepts.length > 0) {
+                    //    vue.browseConcept(vue.result.concepts[0]);
+                    //}
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        browseConcept: function(cpt) {
+            if(!cpt) {
+                return;
+            }
+            
+            var vue = this;
+            
+            if(this.concept !== null && this.concept.uri !== cpt.uri) {
+                this.offsetP = 0;
+                this.offsetN = 0;
+            }
+
+            var data = {
+                uri: cpt.uri,
+                offsetP: this.offsetP,
+                offsetN: this.offsetN
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/browseConcept',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.concept = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        switchPage: function(index, offset) {
+            if(this.concept === null)
+                return;
+            
+            var vue = this;
+
+            if(index === 0) {
+                this.offsetP = offset;
+            } else {
+                this.offsetN = offset;
+            }
+
+            var data = {
+                uri: this.concept.uri,
+                offsetP: this.offsetP,
+                offsetN: this.offsetN
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/browseConcept',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.concept = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+            
+        },
+        switchSearchPage: function(offset) {
+            this.offsetSearch = offset;
+            this.search();
+        },
+        closeConcept: function() {
+            this.concept = null;
+        },
+        browseFile: function(uri) {
+            this.$parent.$refs.fileComponent.browseChild(uri);
+            this.$parent.switchLeftTab(0);
+        },
+        conceptFeedback: function(cpt, rating) {
+        
+            var newAssertion = {
+                "statement": cpt.assertion.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            this.$parent.sendAssertion(newAssertion, this.$parent.refresh);
+        },
+        literalFeedback: function(cpt, entry, propertyLocalname, rating) {
+        
+            //trim
+            entry.statement[propertyLocalname] = entry.statement[propertyLocalname].trim();
+            
+            if(!entry.statement[propertyLocalname]) {
+                return;
+            }
+        
+            var positiveAssertion = {
+                "statement": entry.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+        
+            var assertions = [positiveAssertion];
+        
+            //the old value will be negative
+            let stmt = JSON.parse(JSON.stringify(entry.statement));
+            
+            //if positive and it was changed, the previous value is negative
+            if(rating === 'Positive' && stmt[propertyLocalname] !== entry.fixedValue) {
+                //for negative assertion
+                stmt[propertyLocalname] = entry.fixedValue;
+
+                var negativeAssertion = {
+                    "statement": stmt,
+                    "rating": 'Negative',
+                    "intelligence": "NI",
+                    "confidence": 1.0,
+                    "name": this.$parent.username,
+                    "phase": "ConceptDiscovery"
+                };
+                
+                assertions.push(negativeAssertion);
+            }
+            
+            this.$parent.sendAssertion(assertions, this.$parent.refresh);
+        },
+        additionalHiddenLabelFeedback: function(cpt) {
+            
+            var hiddenLabel = cpt.userEntryAltLabel.trim();
+            
+            if(!hiddenLabel) {
+                return;
+            }
+            
+            var stmt = {
+                "@id": cpt.uri,
+                "@context": {"hiddenLabel": {"@id": "http://www.w3.org/2004/02/skos/core#hiddenLabel"}},
+                "hiddenLabel": hiddenLabel
+            };
+            
+            var positiveAssertion = {
+                "statement": stmt,
+                "rating": 'Positive',
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            this.$parent.sendAssertion(positiveAssertion, this.$parent.refresh);
+        },
+        isTopicOfFeedback: function(cpt, entry, rating) {
+            var newAssertion = {
+                "statement": entry.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            this.$parent.sendAssertion(newAssertion, this.$parent.refresh);
+        },
+        canMerge: function() {
+            if(this.$parent.$refs.conceptComponentRight.concept) {
+                return this.concept.uri !== this.$parent.$refs.conceptComponentRight.concept.uri;
+            }
+            return false;
+        },
+        mergeFeedback: function() {
+            
+            var t = this;
+            this.$parent.assertMerge(
+                    this.concept.uri,
+                    this.$parent.$refs.conceptComponentRight.concept.uri,
+                    'Positive',
+                    function() {
+                        t.$parent.$refs.conceptComponentRight.closeConcept();
+                        t.$parent.refresh();
+                    }
+            );
+            
+            /*
+            var stmt = {
+                "@id": this.concept.uri,
+                "@context": {"sameAs": {"@id": "http://www.w3.org/2002/07/owl#sameAs"}},
+                "sameAs": {
+                    "@id": this.$parent.$refs.conceptComponentRight.concept.uri
+                }    
+            };
+            
+            var positiveAssertion = {
+                "statement": stmt,
+                "rating": 'Positive',
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            var t = this;
+            this.$parent.sendAssertion(positiveAssertion, function() { 
+                t.$parent.$refs.conceptComponentRight.closeConcept();
+                t.$parent.refresh();
+            });
+            */
+        },
+        mergeTableFeedback: function(entry, rating) {
+            
+            var assertion = {
+                "statement": entry.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "ConceptDiscovery"
+            };
+            
+            this.$parent.sendAssertion(assertion, this.$parent.refresh);
+            
+        },
+        dragStart: function(event, concept)  {
+            //console.log("dragStart");
+            //console.log(event);
+            //console.log(concept);
+            event.dataTransfer.setData("conceptUri", concept.uri);
+        },
+        allowDrop: function(event) {
+            if(this.$parent.predicate === '') {
+                return;
+            }
+            event.preventDefault();
+        },
+        conceptDrop: function(event, concept) {
+            event.preventDefault();
+            
+            this.$parent.sendEvent(event);
+            
+            var conceptUri = event.dataTransfer.getData("conceptUri");
+            
+            var isTaxonomy = this.$parent.predicate === 'http://www.w3.org/2004/02/skos/core#broader';
+            
+            if(conceptUri !== '' && this.$parent.predicate !== '') {
+                
+                //console.log(conceptUri + " -" + this.$parent.predicate + "-> " + concept.uri);
+                
+                var stmt = {
+                    "@id": conceptUri,
+                    "@context": {"pred": {"@id": this.$parent.predicate, "@type": "@id"}},
+                    "pred": concept.uri
+                };
+            
+                var positiveAssertion = {
+                    "statement": stmt,
+                    "rating": 'Positive',
+                    "intelligence": "NI",
+                    "confidence": 1.0,
+                    "name": this.$parent.username,
+                    "phase": (isTaxonomy ? "ConceptHierarchyDerivation" : "NonTaxonomicRelationLearning")
+                };
+
+                var parent = this.$parent;
+                this.$parent.sendAssertion(positiveAssertion, function() {
+                    parent.refresh();
+                    if(isTaxonomy) {
+                        parent.switchLeftTab(3);
+                    } else {
+                        parent.switchLeftTab(4);
+                    }
+                });
+            }
+        },
+        assertNewConcept: function() {
+            var vue = this;
+            
+            if(this.createTopicName === '')
+                return;
+            
+            var data = {
+                prefLabel: this.createTopicName,
+                type: 'http://www.w3.org/2004/02/skos/core#Concept'
+            };
+            
+            $.ajax({
+                type: 'POST',
+                url: '/assertNewConcept',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    //show new concept
+                    vue.concept = data;
+                    
+                    //reset
+                    vue.conceptName = '';
+                    vue.$parent.refresh();
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        }
+    }
+});
+
+Vue.component('explorer-search-component', {
+    template: '#explorer-search-template',
+    data() {
+        return {
+            search: '',
+            wait: false,
+            result: null,
+            regex: false,
+            onlyFolder: false,
+            createType: ''
+        };
+    },
+    created: function() {
+        
+    },
+    methods: {
+        explorerSearch: function() {
+            var vue = this;
+
+            var data = {
+                search: this.search,
+                regex: this.regex,
+                onlyFolder: this.onlyFolder,
+                folder: this.$parent.$refs.fileComponent.fileUri
+            };
+            
+            //console.log(JSON.stringify(data));
+
+            vue.wait = true;
+            $.ajax({
+                type: 'POST',
+                url: '/explorerSearch',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.wait = false;
+                    vue.result = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        explorerSearchCreate: function() {
+            var vue = this;
+            
+            vue.result.typeUri = vue.createType;
+
+            vue.$parent.wait = true;
+            
+            $.ajax({
+                type: 'POST',
+                url: '/explorerSearchCreate',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(vue.result),
+                success: function (data, textStatus, request) {
+                    vue.$parent.wait = false;
+                    vue.$parent.refresh();
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.$parent.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        }
+    }
+});
+
+Vue.component('type-component', {
+    template: '#type-component-template',
+    data() {
+        return {
+            typeName: '',
+            result: null,
+            type: null
+        };
+    },
+    created: function() {
+        this.getTypes();
+    },
+    methods: {
+        refresh: function() {
+            this.getTypes();
+        },
+        getTypes: function() {
+            var vue = this;
+
+            var data = {
+                
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/getTypes',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.result = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        addType: function() {
+            if(this.typeName.trim() === '')
+                return;
+            
+            var vue = this;
+
+            var data = {
+                typeName: this.typeName.trim()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/addType',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.typeName = '';
+                    vue.$parent.refresh();
+                    vue.result = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+            
+        },
+        typeFeedback: function(type, rating) {
+            
+            var assertion = {
+                "statement": type.assertion.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "OntologyPopulation"
+            };
+            
+            this.$parent.sendAssertion(assertion, this.$parent.refresh);
+        },
+        literalFeedback: function(entry, propertyLocalname, rating) {
+        
+            var positiveAssertion = {
+                "statement": entry.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "OntologyPopulation"
+            };
+        
+            var assertions = [positiveAssertion];
+        
+            //the old value will be negative
+            let stmt = JSON.parse(JSON.stringify(entry.statement));
+            
+            //if positive and it was changed, the previous value is negative
+            if(rating === 'Positive' && stmt[propertyLocalname] !== entry.fixedValue) {
+                //for negative assertion
+                stmt[propertyLocalname] = entry.fixedValue;
+
+                var negativeAssertion = {
+                    "statement": stmt,
+                    "rating": 'Negative',
+                    "intelligence": "NI",
+                    "confidence": 1.0,
+                    "name": this.$parent.username,
+                    "phase": "OntologyPopulation"
+                };
+                
+                assertions.push(negativeAssertion);
+            }
+            
+            this.$parent.sendAssertion(assertions, this.$parent.refresh);
+        }
+    }
+});
+
+Vue.component('property-component', {
+    template: '#property-component-template',
+    data() {
+        return {
+            propertyName: '',
+            result: null,
+            types: [],
+            property: null
+        };
+    },
+    created: function() {
+        this.getProperties();
+    },
+    methods: {
+        refresh: function() {
+            this.getProperties();
+        },
+        getProperties: function() {
+            var vue = this;
+
+            var data = {
+                
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/getProperties',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.result = data;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        addProperty: function() {
+            if(this.propertyName.trim() === '')
+                return;
+            
+            var vue = this;
+
+            var data = {
+                propertyName: this.propertyName.trim()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/addProperty',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.propertyName = '';
+                    vue.result = data;
+                    vue.$parent.refresh();
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+            
+        },
+        propertyFeedback: function(prop, rating) {
+            
+            var assertion = {
+                "statement": prop.assertion.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "OntologyPopulation"
+            };
+            
+            this.$parent.sendAssertion(assertion, this.$parent.refresh);
+        },
+        literalFeedback: function(entry, propertyLocalname, rating) {
+        
+            var positiveAssertion = {
+                "statement": entry.statement,
+                "rating": rating,
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "OntologyPopulation"
+            };
+        
+            var assertions = [positiveAssertion];
+        
+            //the old value will be negative
+            let stmt = JSON.parse(JSON.stringify(entry.statement));
+            
+            //if positive and it was changed, the previous value is negative
+            if(rating === 'Positive' && stmt[propertyLocalname] !== entry.fixedValue) {
+                //for negative assertion
+                stmt[propertyLocalname] = entry.fixedValue;
+
+                var negativeAssertion = {
+                    "statement": stmt,
+                    "rating": 'Negative',
+                    "intelligence": "NI",
+                    "confidence": 1.0,
+                    "name": this.$parent.username,
+                    "phase": "OntologyPopulation"
+                };
+                
+                assertions.push(negativeAssertion);
+            }
+            
+            this.$parent.sendAssertion(assertions, this.$parent.refresh);
+        },
+        domainRangeFeedback: function(entry, propertyLocalname) {
+        
+            //it was changed by <select v-model="...">
+            var pa = {
+                "statement": entry.statement,
+                "rating": 'Positive',
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "OntologyPopulation"
+            };
+        
+            //the old value will be negative
+            let stmt = JSON.parse(JSON.stringify(entry.statement));
+            stmt[propertyLocalname] = entry.fixedValue;
+            var na = {
+                "statement": stmt,
+                "rating": 'Negative',
+                "intelligence": "NI",
+                "confidence": 1.0,
+                "name": this.$parent.username,
+                "phase": "OntologyPopulation"
+            };
+            
+            this.$parent.sendAssertion([pa, na], this.$parent.refresh);
+        }
+    }
+});
+
+Vue.component('suggestion-component', {
+    template: '#suggestion-component-template',
+    data() {
+        return {
+            result: null,
+            types: [],
+            properties: [],
+            predicate: null,
+            objectType: null,
+            updateKey: 0,
+            offsetP: 0,
+            offsetN: 0
+        };
+    },
+    props: {
+        type: String  //typing, taxonomy, relations
+    },
+    created: function() {
+        this.getSuggestions();
+    },
+    computed: {
+        count: function() {
+            if(this.result === null) {
+                return 0;
+            }
+            return this.result.suggested.length;
+        }
+    },
+    methods: {
+        refresh: function() {
+            this.getSuggestions();
+        },
+        getSuggestions: function() {
+            var vue = this;
+
+            var data = {
+                type: this.type,
+                offsetP: this.offsetP,
+                offsetN: this.offsetN
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/getSuggestions',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.result = data;
+                    vue.updateKey += 1;
+                    vue.$parent.updateTabsKey();
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        getId: function(uri) {
+            return uri.replace('urn:concept:', '');
+        },
+        assertEntry: function(entry, rating) {
+            if(this.type === 'typing') {
+                this.$parent.assertType(entry.uris.subject, entry.uris.object, rating, this.$parent.refresh);
+                
+            } else if(this.type === 'merge') {
+                
+                var t = this;
+                
+                this.$parent.assertMerge (
+                        entry.uris.subject, 
+                        entry.uris.object,
+                        rating, 
+                        function() {
+                            if(t.$parent.$refs.conceptComponentRight.concept &&
+                               entry.uris.object === t.$parent.$refs.conceptComponentRight.concept.uri) {
+                                t.$parent.$refs.conceptComponentRight.closeConcept();
+                            }
+                            t.$parent.refresh();
+                        }
+                );
+                
+            } else {
+                var newAssertion = {
+                    "statement": entry.statement,
+                    "rating": rating,
+                    "intelligence": "NI",
+                    "confidence": 1.0,
+                    "name": this.$parent.username,
+                    "phase": (this.type === 'taxonomy' ? "ConceptHierarchyDerivation" : "NonTaxonomicRelationLearning")
+                };
+            
+                this.$parent.sendAssertion(newAssertion, this.$parent.refresh);
+            }
+        },
+        assertAllEntries: function(rating) {
+            if(this.type === 'typing') {
+                this.$parent.assertTypes(this.result.suggested, rating, this.$parent.refresh);
+                
+            } else if(this.type === 'merge') {
+                var t = this;
+                
+                this.$parent.assertMerges(
+                        this.result.suggested,
+                        rating, 
+                        function() {
+                            t.$parent.$refs.conceptComponentRight.closeConcept();
+                            t.$parent.refresh();
+                        }
+                );
+                
+            } else {
+                var assertions = [];
+                
+                for(var entry of this.result.suggested) {
+                    var newAssertion = {
+                        "statement": entry.statement,
+                        "rating": rating,
+                        "intelligence": "NI",
+                        "confidence": 1.0,
+                        "name": this.$parent.username,
+                        "phase": (this.type === 'taxonomy' ? "ConceptHierarchyDerivation" : "NonTaxonomicRelationLearning")
+                    };
+                    assertions.push(newAssertion);
+                }
+                
+                this.$parent.sendAssertion(assertions, this.$parent.refresh);
+            }
+        },
+        assertNewEntry: function() {
+            if(!this.$parent.$refs.conceptComponentLeft.concept) {
+                return;
+            }
+            
+            if(this.type === 'typing') {
+                if(!this.objectType) {
+                    return;
+                }
+                this.$parent.assertType(this.$parent.$refs.conceptComponentLeft.concept.uri, this.objectType, 'Positive', this.$parent.refresh);
+                
+            } else if(this.type === 'merge') {
+                if(!this.$parent.$refs.conceptComponentRight.concept) {
+                    return;
+                }
+                var t = this;
+                this.$parent.assertMerge(
+                        this.$parent.$refs.conceptComponentLeft.concept.uri, 
+                        this.$parent.$refs.conceptComponentRight.concept.uri, 
+                        'Positive', 
+                        function() { 
+                            t.$parent.$refs.conceptComponentRight.closeConcept();
+                            t.$parent.refresh();
+                        }
+                );
+                
+            } else {
+                if(!this.$parent.$refs.conceptComponentRight.concept) {
+                    return;
+                }
+                if(this.type === 'relations' && !this.predicate) {
+                    return;
+                }
+                
+                var stmt = {
+                    "@id": this.$parent.$refs.conceptComponentLeft.concept.uri
+                };
+                var prop = this.type === 'taxonomy' ? "http://www.w3.org/2004/02/skos/core#broader" : this.predicate;
+                stmt[prop] = { "@id": this.$parent.$refs.conceptComponentRight.concept.uri };
+                
+                var newAssertion = {
+                    "statement": stmt,
+                    "rating": 'Positive',
+                    "intelligence": "NI",
+                    "confidence": 1.0,
+                    "name": this.$parent.username,
+                    "phase": (this.type === 'taxonomy' ? "ConceptHierarchyDerivation" : "NonTaxonomicRelationLearning")
+                };
+            
+                this.$parent.sendAssertion(newAssertion, this.$parent.refresh);
+            }
+        },
+        browseConcept: function(side, uri) {
+            var comp = null;
+            if(side === 'left') {
+                comp = this.$parent.$refs.conceptComponentLeft;
+            } else {
+                comp = this.$parent.$refs.conceptComponentRight;
+                this.$parent.switchTab(0);
+            }
+            comp.browseConcept({ uri: uri });
+        },
+        switchPage: function(attr, offset) {
+            this[attr] = offset;
+            this.getSuggestions();
+        },
+        exchange: function(entry) {
+            var tmp = entry.prefLabels.subject;
+            entry.prefLabels.subject = entry.prefLabels.object;
+            entry.prefLabels.object = tmp;
+            
+            tmp = entry.uris.subject;
+            entry.uris.subject = entry.uris.object;
+            entry.uris.object = tmp;
+            
+            tmp = entry.statement['@id'];
+            entry.statement['@id'] = entry.statement.sameAs;
+            entry.statement.sameAs = tmp;
+        }
+    }
+});
+
+Vue.component('status-component', {
+    template: '#status-component-template',
+    data() {
+        return {
+            result: null,
+            chart: null
+        };
+    },
+    created: function() {
+        
+    },
+    methods: {
+        refresh: function() {
+            this.getStatus();
+        },
+        getStatus: function() {
+            var vue = this;
+
+            var data = {
+                
+            };
+
+            this.result = null;
+            $.ajax({
+                type: 'POST',
+                url: '/getStatus',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.result = data;
+                    vue.initChart();
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        initChart: function() {
+            const config = {
+                type: 'line',
+                data: this.result.data,
+                options: {
+                    animation: false,
+                    //parsing: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Inputs"
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "Overall"
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    tooltips: {
+                       enabled: false
+                    }
+                }
+            };
+            
+            const chartElem = document.getElementById('myChart');
+            
+            if(this.chart !== null) {
+                this.chart.destroy();
+            }
+            
+            this.chart = new Chart(
+                chartElem,
+                config
+            );
+    
+            //console.log(chartElem);
+            //console.log(this.chart);
+        },
+        showUntyped: function() {
+            const comp = this.$parent.$refs.conceptComponentLeft;
+            comp.conceptName = '';
+            comp.conceptType = this.getIndividualName();
+            comp.search();
+            this.$parent.switchLeftTab(2);
+        },
+        prop2str: function(prop) {
+            var number = (prop * 100).toFixed(2);
+            if(i18n.locale === 'de') {
+                number = number.replace(".", ",");
+            }
+            return number;
+        },
+        decimalPointFix: function(number) {
+            if(i18n.locale === 'de') {
+                number = number.replace(".", ",");
+            } else {
+                number = number.replace(",", ".");
+            }
+            return number;
+        },
+        getIndividualName: function() {
+            if(i18n.locale === 'de') {
+                return "(Schlagwort)";
+            } else if(i18n.locale === 'semweb') {
+                return "owl:NamedIndividual";
+            }
+            return "(Tag)";
+        }
+    }
+});
+
+//https://kazupon.github.io/vue-i18n/started.html
+const messages = {
+  de: {
+    tab: {
+      explorer: 'Explorer',
+      unification: 'Vereinen',
+      typing: 'Typisierung',
+      taxonomy: 'Taxonomie',
+      relations: 'Beziehungen',
+      tags: 'Schlagwort-Explorer',
+      saved: 'Alle Änderungen gespeichert',
+      search: 'Explorer-Suche',
+      ontology: {
+          title: 'Typen',
+          classes: 'Schlagwort-Typen',
+          properties: 'Beziehungstypen'
+      },
+      status: 'Status'
+    },
+    predicate: {
+        choose: '--Beziehung wählen--',
+        narrower_broader: 'Unterbegriff-Oberbegriff'
+    },
+    file: {
+        show_keywords: 'Schlüsselwörter anzeigen',
+        show_tags: 'Schlagwörter anzeigen',
+        show_negButtons: 'Ablehnungsbutton anzeigen',
+        apply_all: 'Alle Übernehmen',
+        apply: 'Übernehmen'
+    },
+    concept: {
+        show_neg: 'auch abgelehnte Schlagwörter anzeigen',
+        new_tag: 'Neues Schlagwort',
+        create_topic: 'als Thema anlegen',
+        name_filter: 'Name Filtern',
+        type_filter: 'Typ Filtern',
+        tag_no: 'Schlagwort Nr.',
+        label_type: 'Anzeigename und Typ',
+        synonyms: 'Wörter mit gleicher oder ähnlicher Bedeutung und unterschiedlichen Schreibweisen',
+        additional_syn: 'Weiteres Synonym',
+        accepted: 'Akzeptierte',
+        rejected: 'Abgelehnte',
+        links: 'Verknüpfungen'
+    },
+    search: {
+        placeholder: 'Suche in Dateinamen',
+        regex: 'Regulären Ausdruck benutzen',
+        results: 'Ergebnis | Ergebnisse',
+        in_total: 'insgesamt',
+        single: 'Auswahl einzeln anlegen als',
+        multi: 'Auswahl zusammen anlegen als',
+        keyword: '(Schlüsselwort)'
+    },
+    type: {
+        new_class: 'Neuen Schlagwort-Typ anlegen',
+        new_property: 'Neuen Beziehungstyp anlegen',
+    },
+    suggestion: {
+        number: 'Nr.'
+    },
+    status: {
+        general: 'Die folgenden Ergebnisse wurden in {duration} ms um {time} Uhr ermittelt.',
+        tagging: 'Verschlagwortung',
+        tagging_desc: 'Insgesamt {positiveTopics} Schlagwort-Verknüpfungen von {positiveTerms} Schlüsselwörtern, d.h. <b style="white-space: nowrap;">{proportion}% Abdeckung</b> durch Schlagwörter erreicht.',
+        tagging_missing: 'Zum Beispiel fehlen noch Schlagwörter für',
+        typing: 'Typisierung',
+        typing_desc: '{positiveTypes} typisierte Schlagwörter von {positiveConcepts} Schlagwörtern, d.h. <b style="white-space: nowrap;">{proportion}% haben einen Typ</b>.',
+        typing_missing: 'Welche haben noch keinen Typ?',
+        taxonomy: 'Taxonomie',
+        taxonomy_desc1: '{taxBroader} von {taxConcepts} Themen haben einen Oberbegriff, d.h. <b style="white-space: nowrap;">{proportion}% sind eingegliedert</b> in einer Taxonomie.',
+        taxonomy_desc2: 'Die Taxonomie Teile sind {taxComponents} mit {taxVertices} Knoten, d.h. sie ist zu <b style="white-space: nowrap;">{proportion}% verbunden</b>.',
+        taxonomy_help: 'Mehr Unterbegriffe zu Oberbegriffen zuordnen',
+        taxonomy_show: 'Taxonomie anzeigen',
+        nontax: 'Beziehungen',
+        nontax_desc1: 'Die Wissensgraph Teile sind {nonTaxComponents} mit {nonTaxVertices} Knoten, d.h. er ist zu <b style="white-space: nowrap;">{proportion}% verbunden</b>.',
+        nontax_desc2: 'Der längste am kürzeste Pfad ist {nonTaxDiameter} lang, d.h. die Teilgraphen sind zu <b style="white-space: nowrap;">{proportion}% vernetzt</b>.',
+        nontax_show: 'Beziehungsgraph anzeigen',
+        overall: 'Gesamtbewertung',
+        effort: 'Aufwand',
+        effort_desc: 'Sie haben {effortClick} mal geklickt und {effortKeydown} Tastenanschläge ausgeführt, also {effortInteractions} mal eine Eingabe getätigt.',
+        user: 'Nutzer',
+        user_desc: 'Sie sind angemeldet als {username}.',
+        explorer: 'Explorer',
+        explorer_desc: 'Der Baum besteht aus {branchCount} Zweigen mit {leafCount} Blättern, also insgesamt {sum} Knoten.',
+        ram: 'Arbeitsspeicher',
+        ram_desc: 'Es sind {memoryUsed} belegt und {memoryTotal} reserviert, aber maximal {memoryMax} möglich.',
+        or: 'oder'
+    },
+    question: {
+        recursiveReject: 'Möchten Sie wirklich alle Wörter aus allen Unterordnern ablehnen?',
+        inTax: 'In Taxonomie eingegliedert',
+        rel: 'hat mind. eine Beziehung',
+        taxRoot: 'Taxonomie Wurzel'
+    }
+  },
+  en: {
+    tab: {
+      explorer: 'Explorer',
+      unification: 'Unify',
+      typing: 'Typing',
+      taxonomy: 'Taxonomy',
+      relations: 'Relations',
+      tags: 'Tag-Explorer',
+      saved: 'All changes saved',
+      search: 'Explorer Search',
+      ontology: {
+          title: 'Types',
+          classes: 'Tag Types',
+          properties: 'Relation Types'
+      },
+      status: 'Status'
+    },
+    predicate: {
+        choose: '--Choose Relation--',
+        narrower_broader: 'Narrower-Broader'
+    },
+    file: {
+        show_keywords: 'Show keywords',
+        show_tags: 'Show tags',
+        show_negButtons: 'Show reject buttons',
+        apply_all: 'Apply All',
+        apply: 'Apply'
+    },
+    concept: {
+        show_neg: 'Show also rejected tags',
+        new_tag: 'New Tag',
+        create_topic: 'Create as topic',
+        name_filter: 'Filter name',
+        type_filter: 'Filter type',
+        tag_no: 'Tag No.',
+        label_type: 'Display name and type',
+        synonyms: 'Words with same or similar meaning and different spellings',
+        additional_syn: 'Another synonym',
+        accepted: 'Accepted',
+        rejected: 'Rejected',
+        links: 'Links'
+    },
+    search: {
+        placeholder: 'File name search',
+        regex: 'Use regular expression',
+        results: 'Result | Results',
+        in_total: 'in total',
+        single: 'Create selection individually as',
+        multi: 'Create selection together as',
+        keyword: '(Keyword)'
+    },
+    type: {
+        new_class: 'Create new tag type',
+        new_property: 'Create new relation type',
+    },
+    suggestion: {
+        number: 'No.'
+    },
+    status: {
+        general: 'The following results were calculated in {duration} ms at {time}.',
+        tagging: 'Tagging',
+        tagging_desc: 'In total {positiveTopics} tag in {positiveTerms} keywords, i.e. <b style="white-space: nowrap;">{proportion}% coverage</b> achieved by tags.', //'Insgesamt {positiveTopics} Schlagwort-Verknüpfungen von {positiveTerms} Schlüsselwörtern, d.h. <b style="white-space: nowrap;">{proportion}% Abdeckung</b> durch Schlagwörter erreicht.',
+        tagging_missing: 'For example, tags are still missing for',
+        typing: 'Typing',
+        typing_desc: '{positiveTypes} typed tags from {positiveConcepts} tags, i.e. <b style="white-space: nowrap;">{proportion}% have a type</b>.', //'{positiveTypes} typisierte Schlagwörter von {positiveConcepts} Schlagwörtern, d.h. <b style="white-space: nowrap;">{proportion}% haben einen Typ</b>.',
+        typing_missing: 'Which do not have a type yet?',
+        taxonomy: 'Taxonomy',
+        taxonomy_desc1: '{taxBroader} of {taxConcepts} topics have a broader topic, i.e. <b style="white-space: nowrap;">{proportion}% are included</b> in a taxonomy.',
+        taxonomy_desc2: 'The taxonomy parts are {taxComponents} with {taxVertices} nodes, i.e. it is <b style="white-space: nowrap;">{proportion}%</b> connected.',
+        taxonomy_help: 'Assign more narrower to broader topics',
+        taxonomy_show: 'Show taxonomy',
+        nontax: 'Relationships',
+        nontax_desc1: 'The relationship graph parts are {nonTaxComponents} with {nonTaxVertices} nodes, i.e. it is <b style="white-space: nowrap;">{proportion}%</b> connected.',
+        nontax_desc2: 'The longest of the shortest paths is {nonTaxDiameter} long, i.e. the subgraphs are <b style="white-space: nowrap;">{proportion}% interconnected</b>.',
+        nontax_show: 'Show relationship graph',
+        overall: 'Overall Assessment',
+        effort: 'Effort',
+        effort_desc: 'You have clicked {effortClick} times and performed {effortKeydown} keystrokes, so {effortInteractions} times an input was performed.',
+        user: 'User',
+        user_desc: 'You are logged in as {username}.',
+        explorer: 'Explorer',
+        explorer_desc: 'The tree consists of {branchCount} branches with {leafCount} leaves, so {sum} nodes in total.',
+        ram: 'Memory',
+        ram_desc: 'There are {memoryUsed} occupied and {memoryTotal} reserved, but a maximum of {memoryMax} possible.',
+        or: 'or'
+    },
+    question: {
+        recursiveReject: 'Do you really want to reject all terms from all subfolders?',
+        inTax: 'contained in taxonomy',
+        rel: 'has at least one relationship',
+        taxRoot: 'taxonomy root'
+    }
+  },
+  semweb: {
+    tab: {
+      explorer: 'Explorer',
+      unification: 'Unify',
+      typing: 'Typing',
+      taxonomy: 'Taxonomic',
+      relations: 'Non-Taxonomic',
+      tags: 'Named Individuals',
+      saved: 'All changes saved',
+      search: 'Explorer Search',
+      ontology: {
+          title: 'Ontology',
+          classes: 'Classes',
+          properties: 'Properties'
+      },
+      status: 'Status'
+    },
+    predicate: {
+        choose: '--Choose Property--',
+        narrower_broader: 'skos:broader'
+    },
+    file: {
+        show_keywords: 'Show terms',
+        show_tags: 'Show named individuals',
+        show_negButtons: 'Show reject buttons',
+        apply_all: 'Apply All',
+        apply: 'Apply'
+    },
+    concept: {
+        show_neg: 'Show also rejected named individuals',
+        new_tag: 'New Named Individual',
+        create_topic: 'Create as skos:Concept',
+        name_filter: 'Filter names',
+        type_filter: 'Filter class',
+        tag_no: 'Named Individual No.',
+        label_type: 'skos:prefLabel and rdf:type',
+        synonyms: 'Synonyms (skos:hiddenLabel)',
+        additional_syn: 'Another Synonym',
+        accepted: 'Accepted',
+        rejected: 'Rejected',
+        links: 'foaf:topic Statements'
+    },
+    search: {
+        placeholder: 'File name search',
+        regex: 'Use regular expression',
+        results: 'Result | Results',
+        in_total: 'in total',
+        single: 'Create selection individually as',
+        multi: 'Create selection together as',
+        keyword: 'Term'
+    },
+    type: {
+        new_class: 'Create new class',
+        new_property: 'Create new property'
+    },
+    suggestion: {
+        number: 'No.'
+    },
+    status: {
+        general: 'The following results were calculated in {duration} ms at {time}.',
+        tagging: 'Tagging',
+        tagging_desc: 'In total {positiveTerms} terms and {positiveTopics} named individuals tagged, i.e. <b style="white-space: nowrap;">{proportion}% coverage</b> achieved by named individuals.',
+        tagging_missing: 'For example, named individuals are still missing for',
+        typing: 'Typing',
+        typing_desc: '{positiveTypes} of {positiveConcepts} named individuals have a type (<b style="white-space: nowrap;">{proportion}%</b>).',
+        typing_missing: 'Which do not have a type yet?',
+        taxonomy: 'Taxonomic Relations',
+        taxonomy_desc1: '{taxBroader} of {taxConcepts} skos:Concepts have a broader concept, i.e. <b style="white-space: nowrap;">{proportion}% are included</b> in the taxonomy.',
+        taxonomy_desc2: 'Taxonomy parts={taxComponents} with nodes={taxVertices}, i.e. it is <b style="white-space: nowrap;">{proportion}%</b> connected.',
+        taxonomy_help: 'Assign more narrower to broader concepts',
+        taxonomy_show: 'Show taxonomy tree',
+        nontax: 'Non-Taxonomic Relations',
+        nontax_desc1: 'Graph parts={nonTaxComponents} with nodes={nonTaxVertices}, i.e. it is <b style="white-space: nowrap;">{proportion}%</b> connected.',
+        nontax_desc2: 'The longest of the shortest paths is {nonTaxDiameter} long, i.e. the subgraphs are <b style="white-space: nowrap;">{proportion}% interconnected</b>.',
+        nontax_show: 'Show non-taxonomic graph',
+        overall: 'Overall Assessment',
+        effort: 'Effort',
+        effort_desc: 'You have clicked {effortClick} times and performed {effortKeydown} keystrokes, so {effortInteractions} times an input was performed.',
+        user: 'User',
+        user_desc: 'You are logged in as {username}.',
+        explorer: 'Explorer',
+        explorer_desc: 'The tree consists of {branchCount} branches with {leafCount} leaves, so {sum} nodes in total.',
+        ram: 'Memory',
+        ram_desc: 'There are {memoryUsed} occupied and {memoryTotal} reserved, but a maximum of {memoryMax} possible.',
+        or: 'or'
+    },
+    question: {
+        recursiveReject: 'Do you really want to reject all terms from all subfolders?',
+        inTax: 'contained in taxonomy',
+        rel: 'has at least one property',
+        taxRoot: 'taxonomy root'
+    }
+  }
+};
+
+const i18n = new VueI18n({
+  locale: '${locale}', //replaced by server
+  messages: messages
+});
+
+var vm = new Vue({
+    i18n: i18n,
+    el: '#app',
+    data: {
+        wait: false,
+        exception: '',
+        tabIndex: 0,
+        leftTabIndex: 0,
+        tabsKey: 0,
+        username: '', //is filled with login username in backend
+        types: [],
+        properties: [],
+        predicate: ''
+    },
+    created: function () {
+        this.getPositiveTypes();
+        this.getPositiveProperties();
+        this.switchLeftTab(0);
+        this.switchTab(0);
+        this.changeLanguage(i18n.locale);
+    },
+    methods: {
+        switchTab: function(i) {
+            if(i === 3) {
+                this.$refs.statusComponent.refresh();
+            }
+            this.tabIndex = i;
+        },
+        switchLeftTab: function(i) {
+            this.leftTabIndex = i;
+        },
+        refresh: function() {
+            this.getPositiveTypes();
+            this.getPositiveProperties();
+            
+            this.$refs.fileComponent.refresh();
+            this.$refs.conceptComponentLeft.refresh();
+            this.$refs.conceptComponentRight.refresh();
+            this.$refs.typeComponent.refresh();
+            this.$refs.propertyComponent.refresh();
+            
+            this.$refs.mergeComponent.refresh();
+            this.$refs.typingComponent.refresh();
+            this.$refs.taxonomyComponent.refresh();
+            this.$refs.relationsComponent.refresh();
+        },
+        updateTabsKey: function() {
+            this.tabsKey += 1;
+        },
+        sendAssertion: function (assertion, callback) {
+            var vue = this;
+            vue.wait = true;
+            //assertion can be a JSONArray
+            $.ajax({
+                type: 'POST',
+                url: '/sendAssertion',
+                contentType: 'application/json',
+                data: JSON.stringify(assertion),
+                success: function (data, textStatus, request) {
+                    vue.wait = false;
+                    if (callback) {
+                        callback();
+                    }
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        assertType: function(conceptUri, typeUri, rating, callback) {
+            var vue = this;
+            
+            var data = {
+                conceptUri: conceptUri,
+                typeUri: typeUri,
+                rating: rating
+            };
+            
+            vue.wait = true;
+            //assertion can be a JSONArray
+            $.ajax({
+                type: 'POST',
+                url: '/assertType',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.wait = false;
+                    if (callback) {
+                        callback();
+                    }
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        assertTypes: function(suggested, rating, callback) {
+            var vue = this;
+            
+            var data = {
+                suggested: suggested,
+                rating: rating
+            };
+            
+            vue.wait = true;
+            //assertion can be a JSONArray
+            $.ajax({
+                type: 'POST',
+                url: '/assertTypes',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.wait = false;
+                    if (callback) {
+                        callback();
+                    }
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        assertMerge: function(conceptUriLeft, conceptUriRight, rating, callback) {
+            var vue = this;
+            
+            var data = {
+                conceptUriLeft: conceptUriLeft,
+                conceptUriRight: conceptUriRight,
+                rating: rating
+            };
+            
+            vue.wait = true;
+            //assertion can be a JSONArray
+            $.ajax({
+                type: 'POST',
+                url: '/assertMerge',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.wait = false;
+                    if (callback) {
+                        callback();
+                    }
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        assertMerges: function(suggested, rating, callback) {
+            var vue = this;
+            
+            var data = {
+                suggested: suggested,
+                rating: rating
+            };
+            
+            vue.wait = true;
+            $.ajax({
+                type: 'POST',
+                url: '/assertMerges',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (data, textStatus, request) {
+                    vue.wait = false;
+                    if (callback) {
+                        callback();
+                    }
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.wait = false;
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        appClicked: function(e) {
+            this.sendEvent(e);
+        },
+        appKeyDown: function(e) {
+            //only send enter
+            if (e.which == 13 || e.keyCode == 13) {
+                this.sendEvent(e);
+            }
+        },
+        sendEvent: function(e) {
+            $.ajax({
+                type: 'POST',
+                url: '/sendEvent',
+                contentType: 'application/json',
+                data: this.stringifyEvent(e)
+            });
+        },
+        stringifyEvent: function(e) {
+            const obj = {};
+            for (let k in e) {
+                //restrict because of firefox JSON.stringify permission error
+                if(k === 'type' || k === 'target' || k === 'x' || k === 'y' || k == 'key' || k == 'keyCode') {
+                    obj[k] = e[k];
+                }
+            }
+            return JSON.stringify(obj, (k, v) => {
+              if (v instanceof Node) {
+                  
+                  if(!v.textContent)
+                      return 'Node';
+
+                  if(v.textContent.length < 100) {
+                    return v.textContent.trim(); 
+                  }
+
+                  return 'Node-TextOverflow';
+              }
+              if (v instanceof Window) return '';
+              return v;
+            });
+        },
+        getPositiveTypes: function() {
+            var vue = this;
+
+            $.ajax({
+                type: 'POST',
+                url: '/getPositiveTypes',
+                contentType: 'application/json',
+                data: JSON.stringify({}),
+                success: function (data, textStatus, request) {
+                    vue.types = data.types;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        getPositiveProperties: function() {
+            var vue = this;
+
+            $.ajax({
+                type: 'POST',
+                url: '/getPositiveProperties',
+                contentType: 'application/json',
+                data: JSON.stringify({}),
+                success: function (data, textStatus, request) {
+                    vue.properties = data.properties;
+                },
+                error: function (request, textStatus, errorThrown) {
+                    vue.exception = request.responseText;
+                }
+            });
+        },
+        changePredicate: function(pred) {
+            this.predicate = pred;
+            this.predicateChanged();
+        },
+        changePredicateTaxonomy: function() {
+            this.predicate = 'http://www.w3.org/2004/02/skos/core#broader';
+            this.predicateChanged();
+        },
+        predicateChanged: function() {
+            
+            if(this.predicate === '') {
+                this.$refs.conceptComponentLeft.resetBoth('', '');
+                this.$refs.conceptComponentRight.resetBoth('', '');
+                this.switchLeftTab(0);
+                this.switchTab(0);
+                
+            } if(this.predicate === 'http://www.w3.org/2004/02/skos/core#broader') {
+                this.$refs.conceptComponentLeft.resetBoth('', this.getTopicName());
+                this.$refs.conceptComponentRight.resetBoth('', this.getTopicName());
+                this.switchLeftTab(3);
+                this.switchTab(0);
+                
+            } else {
+                var properties = this.$refs.propertyComponent.result.properties;  
+                
+                var selected = properties.filter(p => p.assertion.statement["@id"] === this.predicate);
+                if(selected.length > 0) {
+                    
+                    var domain = selected[0].domainAssertion.statement.domain;
+                    var range = selected[0].rangeAssertion.statement.range;
+                    
+                    var filteredDomain = this.types.filter(p => p.uri === domain);
+                    var filteredRange = this.types.filter(p => p.uri === range);
+                    
+                    if(filteredDomain.length > 0 && filteredRange.length > 0) {
+                        this.$refs.conceptComponentLeft.resetBoth('', filteredDomain[0].prefLabel);
+                        this.$refs.conceptComponentRight.resetBoth('', filteredRange[0].prefLabel);
+                        this.switchLeftTab(4);
+                        this.switchTab(0);
+                    }
+                }
+            }
+        },
+        getTopicName: function() {
+            if(i18n.locale === 'de') {
+                return "Thema";
+            } else if(i18n.locale === 'semweb') {
+                return "skos:Concept";
+            }
+            return "Topic";
+        },
+        changeLanguage: function(lang) {
+            i18n.locale = lang;
+            
+            if(i18n.locale === 'de') {
+                document.title = "Anwendung | Verschlagwortung von Dateinamen";
+            } else if(i18n.locale === 'semweb') {
+                document.title = "Application | Personal Knowledge Graph Construction from File Names"
+            } else {
+                document.title = "Application | Tagging of File Names";
+            }
+        }
+    }
+});
+
+        </script>
+        
+    </body>
+</html>

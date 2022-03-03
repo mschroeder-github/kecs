@@ -1,0 +1,29 @@
+{
+    "classes": [
+        "Person",
+        "Group",
+        "Organization",
+
+        "Project",
+        "Software",
+
+        "Conference",
+        "Lecture",
+        "Meeting",
+        "Task",
+
+        "Year",
+        "City",
+        "Country",
+        "Region",
+        "Location"
+    ],
+    "properties": [
+        ["Person", "is interested in", "Topic"],
+        ["Company", "has project", "Project"],
+        ["Person", "programs", "Software"],
+        ["Project", "uses", "Software"],
+        ["Person", "works at", "Company"],
+        ["Person", "works for", "Project"]
+    ]
+}

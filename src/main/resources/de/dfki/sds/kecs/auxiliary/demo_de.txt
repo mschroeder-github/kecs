@@ -1,0 +1,24 @@
+d /
+d //Eigene Bilder
+d //Eigene Bilder/Urlaub
+d //Eigene Bilder/Urlaub/Sommerurlaub 2018
+f //Eigene Bilder/Urlaub/Sommerurlaub 2018/Mit Max am Strand.jpg
+f //Eigene Bilder/Thumbs.db
+d //Eigene Dokumente
+d //Eigene Dokumente/Kontoauszuege
+f //Eigene Dokumente/Kontoauszuege/Kontoauszug-2021-05-02.pdf
+f //Eigene Dokumente/D78986485-DocCache.c18
+f //Eigene Dokumente/Finanzamt Kaiserslautern - Brief2020.docx
+f //Eigene Dokumente/Straßenbahn Ticket_Max Mustermann_Scan.pdf
+d //Desktop
+f //Desktop/2021 Reparatur am Auto - Rechnung#Opel Astra.pdf
+f //Desktop/handyvertrag-Samsung Galaxy S21 5G-ID6873594.pdf
+d //Downloads
+f //Downloads/Kontoauszug-2021-06-03.pdf
+f //Downloads/Leuchtturm-Erika-2018-Google_Fotos_Freigabe.jpg
+d //Windows
+d //Windows/System32
+f //Windows/System32/debug.exe
+f //Windows/System32/PrintConfig.dll
+f //Windows/notepad.exe
+f //Windows/WindowsUpdate.log

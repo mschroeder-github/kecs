@@ -1,0 +1,32 @@
+d /
+d //User
+d //User/Desktop
+f //User/Desktop/2021 Car repair - invoice#Opel Astra.pdf
+f //User/Desktop/cell phone contract-Samsung Galaxy S21 5G-ID6873594.pdf
+d //User/Documents
+d //User/Documents/account stmts
+f //User/Documents/account stmts/Bank statement-2021-05-02.pdf
+f //User/Documents/D78986485-DocCache.c18
+f //User/Documents/Kaiserslautern tax office - Letter2020.docx
+f //User/Documents/Streetcar ticket_Peter Parker_Scan.pdf
+d //User/Downloads
+f //User/Downloads/Bank statement-2021-06-03.pdf
+f //User/Downloads/Lighthouse-Mary-2018-Google_Photos_Shared.jpg
+d //User/Pictures
+f //User/Pictures/Thumbs.db
+d //User/Pictures/Vacation
+d //User/Pictures/Vacation/Summer vacation 2018
+f //User/Pictures/Vacation/Summer vacation 2018/with peter at beach.jpg
+d //User/Zenphase
+d //User/Zenphase/docs
+f //User/Zenphase/docs/mercurtainmentDrawing.txt
+f //User/Zenphase/docs/Parker-proposal_final.docx
+d //User/Zenphase/images
+f //User/Zenphase/images/Thumbs.db
+f //User/Zenphase/images/WIP-treeDiagram.jpg
+d //Windows
+f //Windows/notepad.exe
+d //Windows/System32
+f //Windows/System32/debug.exe
+f //Windows/System32/PrintConfig.dll
+f //Windows/WindowsUpdate.log

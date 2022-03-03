@@ -1,0 +1,29 @@
+{
+    "classes": [
+        "Person",
+        "Group",
+        "Organization",
+
+        "Project",
+        "Software",
+
+        "Conference",
+        "Lecture",
+        "Meeting",
+        "Task",
+
+        "Year",
+        "City",
+        "Country",
+        "Region",
+        "Location"
+    ],
+    "properties": [
+        ["Person", "is interested in", "skos:Concept"],
+        ["Organization", "has project", "Project"],
+        ["Person", "programs", "Software"],
+        ["Project", "uses", "Software"],
+        ["Person", "works at", "Organization"],
+        ["Person", "works for", "Project"]
+    ]
+}
