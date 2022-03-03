@@ -29,7 +29,7 @@ The server runs on <a target="_blank" href="http://localhost:7572">http://localh
 ### Define an Ontology (Optional)
 
 Before bootstrapping, you can define a simple ontology in JSON format, for example
-[ontology.json](data/ontology.json).
+[ontology.json](src/main/resources/de/dfki/sds/kecs/auxiliary/ontology_semweb.json).
 This way, classes and properties are preloaded when using the tool.
 The default place where the ontology is loaded is <code>ontology.json</code>,
 but you can change it with the <code>--ontology</code> argument.
