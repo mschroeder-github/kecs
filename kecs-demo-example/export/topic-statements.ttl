@@ -1,0 +1,79 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix nfo:   <http://www.semanticdesktop.org/ontologies/2007/03/22/nfo#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix dot:   <https://w3id.org/dot#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf:  <http://xmlns.com/foaf/0.1/> .
+@prefix dc:    <http://purl.org/dc/elements/1.1/> .
+
+<urn:file:9>  a         nfo:LocalFileDataObject ;
+        skos:prefLabel  "Bank statement-2021-05-02.pdf" ;
+        foaf:topic      <urn:concept:6> , <urn:concept:1> ;
+        dot:filePath    "//User/Documents/account stmts/Bank statement-2021-05-02.pdf" .
+
+<urn:file:24>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "Parker-proposal_final.docx" ;
+        foaf:topic      <urn:concept:24> , <urn:concept:23> , <urn:concept:11> ;
+        dot:filePath    "//User/Zenphase/docs/Parker-proposal_final.docx" .
+
+<urn:file:27>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "WIP-treeDiagram.jpg" ;
+        foaf:topic      <urn:concept:26> , <urn:concept:25> ;
+        dot:filePath    "//User/Zenphase/images/WIP-treeDiagram.jpg" .
+
+<urn:file:22>  a        nfo:Folder ;
+        skos:prefLabel  "docs" ;
+        foaf:topic      <urn:concept:20> ;
+        dot:filePath    "//User/Zenphase/docs" .
+
+<urn:file:11>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "Kaiserslautern tax office - Letter2020.docx" ;
+        foaf:topic      <urn:concept:9> , <urn:concept:8> , <urn:concept:7> ;
+        dot:filePath    "//User/Documents/Kaiserslautern tax office - Letter2020.docx" .
+
+<urn:file:5>  a         nfo:LocalFileDataObject ;
+        skos:prefLabel  "2021 Car repair - invoice#Opel Astra.pdf" ;
+        foaf:topic      <urn:concept:15> , <urn:concept:14> , <urn:concept:13> , <urn:concept:1> ;
+        dot:filePath    "//User/Desktop/2021 Car repair - invoice#Opel Astra.pdf" .
+
+<urn:file:14>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "Bank statement-2021-06-03.pdf" ;
+        foaf:topic      <urn:concept:6> , <urn:concept:1> ;
+        dot:filePath    "//User/Downloads/Bank statement-2021-06-03.pdf" .
+
+<urn:file:19>  a        nfo:Folder ;
+        skos:prefLabel  "Summer vacation 2018" ;
+        foaf:topic      <urn:concept:3> ;
+        dot:filePath    "//User/Pictures/Vacation/Summer vacation 2018" .
+
+<urn:file:8>  a         nfo:Folder ;
+        skos:prefLabel  "account stmts" ;
+        foaf:topic      <urn:concept:6> ;
+        dot:filePath    "//User/Documents/account stmts" .
+
+<urn:file:23>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "mercurtainmentDrawing.txt" ;
+        foaf:topic      <urn:concept:21> , <urn:concept:22> ;
+        dot:filePath    "//User/Zenphase/docs/mercurtainmentDrawing.txt" .
+
+<urn:file:12>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "Streetcar ticket_Peter Parker_Scan.pdf" ;
+        foaf:topic      <urn:concept:11> , <urn:concept:10> ;
+        dot:filePath    "//User/Documents/Streetcar ticket_Peter Parker_Scan.pdf" .
+
+<urn:file:6>  a         nfo:LocalFileDataObject ;
+        skos:prefLabel  "cell phone contract-Samsung Galaxy S21 5G-ID6873594.pdf" ;
+        foaf:topic      <urn:concept:17> , <urn:concept:16> ;
+        dot:filePath    "//User/Desktop/cell phone contract-Samsung Galaxy S21 5G-ID6873594.pdf" .
+
+<urn:file:21>  a        nfo:Folder ;
+        skos:prefLabel  "Zenphase" ;
+        foaf:topic      <urn:concept:19> ;
+        dot:filePath    "//User/Zenphase" .
+
+<urn:file:15>  a        nfo:LocalFileDataObject ;
+        skos:prefLabel  "Lighthouse-Mary-2018-Google_Photos_Shared.jpg" ;
+        foaf:topic      <urn:concept:5> , <urn:concept:4> , <urn:concept:3> ;
+        dot:filePath    "//User/Downloads/Lighthouse-Mary-2018-Google_Photos_Shared.jpg" .

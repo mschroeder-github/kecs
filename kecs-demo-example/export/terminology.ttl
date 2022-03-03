@@ -1,0 +1,100 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:    <http://purl.org/dc/elements/1.1/> .
+
+<urn:property:3>  a     rdf:Property ;
+        rdfs:domain     <urn:type:9> ;
+        rdfs:range      <urn:type:12> ;
+        skos:prefLabel  "programs" .
+
+<urn:type:1>  a         rdfs:Class ;
+        skos:prefLabel  "City" .
+
+<urn:type:7>  a         rdfs:Class ;
+        skos:prefLabel  "Meeting" .
+
+skos:Concept  a         rdfs:Class ;
+        skos:prefLabel  "skos:Concept" .
+
+<urn:type:13>  a        rdfs:Class ;
+        skos:prefLabel  "Task" .
+
+owl:NamedIndividual  a  rdfs:Class ;
+        skos:prefLabel  "owl:NamedIndividual" .
+
+<urn:property:2>  a     rdf:Property ;
+        rdfs:domain     <urn:type:8> ;
+        rdfs:range      <urn:type:10> ;
+        skos:prefLabel  "has project" .
+
+<urn:property:8>  a     rdf:Property ;
+        rdfs:domain     <urn:type:9> ;
+        rdfs:range      <urn:type:15> ;
+        skos:prefLabel  "drives" .
+
+<urn:type:6>  a         rdfs:Class ;
+        skos:prefLabel  "Location" .
+
+<urn:type:12>  a        rdfs:Class ;
+        skos:prefLabel  "Software" .
+
+<urn:property:1>  a     rdf:Property ;
+        rdfs:domain     <urn:type:9> ;
+        rdfs:range      skos:Concept ;
+        skos:prefLabel  "is interested in" .
+
+<urn:property:7>  a     rdf:Property ;
+        rdfs:domain     <urn:type:9> ;
+        rdfs:range      <urn:type:16> ;
+        skos:prefLabel  "owns" .
+
+<urn:type:5>  a         rdfs:Class ;
+        skos:prefLabel  "Lecture" .
+
+<urn:type:11>  a        rdfs:Class ;
+        skos:prefLabel  "Region" .
+
+<urn:property:6>  a     rdf:Property ;
+        rdfs:domain     <urn:type:9> ;
+        rdfs:range      <urn:type:10> ;
+        skos:prefLabel  "works for" .
+
+<urn:type:4>  a         rdfs:Class ;
+        skos:prefLabel  "Group" .
+
+<urn:type:10>  a        rdfs:Class ;
+        skos:prefLabel  "Project" .
+
+<urn:type:16>  a        rdfs:Class ;
+        skos:prefLabel  "Phone" .
+
+<urn:property:5>  a     rdf:Property ;
+        rdfs:domain     <urn:type:9> ;
+        rdfs:range      <urn:type:8> ;
+        skos:prefLabel  "works at" .
+
+<urn:type:3>  a         rdfs:Class ;
+        skos:prefLabel  "Country" .
+
+<urn:type:9>  a         rdfs:Class ;
+        skos:prefLabel  "Person" .
+
+<urn:type:15>  a        rdfs:Class ;
+        skos:prefLabel  "Car" .
+
+<urn:property:4>  a     rdf:Property ;
+        rdfs:domain     <urn:type:10> ;
+        rdfs:range      <urn:type:12> ;
+        skos:prefLabel  "uses" .
+
+<urn:type:2>  a         rdfs:Class ;
+        skos:prefLabel  "Conference" .
+
+<urn:type:8>  a         rdfs:Class ;
+        skos:prefLabel  "Organization" .
+
+<urn:type:14>  a        rdfs:Class ;
+        skos:prefLabel  "Year" .

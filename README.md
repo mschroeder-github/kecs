@@ -128,3 +128,28 @@ For tests you can login with the default user <code>test</code> and password <co
 
 In case you run this service for external project partners, change the user list as needed and restart the program.
 Distribute credentials to the corresponding people to give them access.
+
+### Demo
+
+![Paper Example](img/paper-example.png)
+
+Before using the tool on real data, you can try out a demo filesystem to learn how to use the application.
+```
+$ java -jar kecs.jar --mode Demo
+```
+The server runs on <a target="_blank" href="http://localhost:7572">http://localhost:7572</a> (default user <code>test</code> and password <code>test</code>).
+
+#### Example Results
+
+The file tree was loaded from [demo_semweb.txt](src/main/resources/de/dfki/sds/kecs/auxiliary/demo_semweb.txt).
+You can investigate the [project files](kecs-demo-example).
+
+Export: [assertions.ttl](kecs-demo-example/export/assertions.ttl), [terminology.ttl](kecs-demo-example/export/terminology.ttl), [topic-statements.ttl](kecs-demo-example/export/topic-statements.ttl)
+
+##### Visualization
+
+Taxonomy
+![Taxonomy](kecs-demo-example/img/taxonomy.png)
+
+Non-Taxonomic Graph
+![Non-Taxonomic](kecs-demo-example/img/non-taxonomic.png)

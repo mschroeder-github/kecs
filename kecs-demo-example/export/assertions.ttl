@@ -1,0 +1,126 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:    <http://purl.org/dc/elements/1.1/> .
+
+<urn:concept:22>  a       <urn:type:8> , owl:NamedIndividual ;
+        skos:hiddenLabel  "mercurtainment" , "Mercurtainment" ;
+        skos:prefLabel    "Mercurtainment" ;
+        <urn:property:2>  <urn:concept:19> .
+
+<urn:concept:7>  a        skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:12> ;
+        skos:hiddenLabel  "Letter" ;
+        skos:prefLabel    "Letter" .
+
+<urn:concept:1>  a        <urn:type:14> , owl:NamedIndividual ;
+        skos:hiddenLabel  "2021" ;
+        skos:prefLabel    "2021" .
+
+<urn:concept:12>  a       skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:20> ;
+        skos:hiddenLabel  "Document Type" ;
+        skos:prefLabel    "Document Type" .
+
+<urn:concept:21>  a       skos:Concept , owl:NamedIndividual ;
+        skos:hiddenLabel  "Drawing" ;
+        skos:prefLabel    "Drawing" .
+
+<urn:concept:27>  a       skos:Concept , owl:NamedIndividual ;
+        owl:sameAs        <urn:concept:20> ;
+        skos:broader      <urn:concept:20> ;
+        skos:hiddenLabel  "Document State" ;
+        skos:prefLabel    "Document State" .
+
+<urn:concept:11>  a       <urn:type:9> , owl:NamedIndividual ;
+        skos:hiddenLabel  "Parker" , "Peter Parker" ;
+        skos:prefLabel    "Peter Parker" ;
+        <urn:property:6>  <urn:concept:19> ;
+        <urn:property:8>  <urn:concept:15> .
+
+<urn:concept:6>  a        skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:wn72984> ;
+        skos:hiddenLabel  "Bank statement" , "Bank Statement" , "Account Statement" , "account stmts" ;
+        skos:prefLabel    "Account Statement" .
+
+<urn:concept:17>  a       skos:Concept , owl:NamedIndividual ;
+        skos:hiddenLabel  "cell phone contract" , "Cell Phone Contract" ;
+        skos:prefLabel    "Cell Phone Contract" .
+
+<urn:concept:20>  a       skos:Concept , owl:NamedIndividual ;
+        owl:sameAs        <urn:concept:27> ;
+        skos:hiddenLabel  "Document" , "docs" ;
+        skos:prefLabel    "Document" .
+
+<urn:concept:26>  a       skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:27> ;
+        skos:hiddenLabel  "Work in Progress" , "WIP" ;
+        skos:prefLabel    "Work in Progress" .
+
+<urn:concept:wn72984>
+        a                 skos:Concept , owl:NamedIndividual ;
+        skos:hiddenLabel  "Statement" ;
+        skos:prefLabel    "Statement" .
+
+<urn:concept:10>  a       skos:Concept , owl:NamedIndividual ;
+        skos:hiddenLabel  "Streetcar Ticket" , "Streetcar ticket" ;
+        skos:prefLabel    "Streetcar Ticket" .
+
+<urn:concept:5>  a        <urn:type:9> , owl:NamedIndividual ;
+        skos:hiddenLabel  "Mary" ;
+        skos:prefLabel    "Mary" ;
+        <urn:property:7>  <urn:concept:16> .
+
+<urn:concept:16>  a       <urn:type:16> , owl:NamedIndividual ;
+        skos:hiddenLabel  "Samsung Galaxy S21" ;
+        skos:prefLabel    "Samsung Galaxy S21" .
+
+<urn:concept:25>  a       skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:12> ;
+        skos:hiddenLabel  "Tree Diagram" , "treeDiagram" ;
+        skos:prefLabel    "Tree Diagram" .
+
+<urn:concept:4>  a        skos:Concept , owl:NamedIndividual ;
+        skos:hiddenLabel  "Lighthouse" ;
+        skos:prefLabel    "Lighthouse" .
+
+<urn:concept:15>  a       <urn:type:15> , owl:NamedIndividual ;
+        skos:hiddenLabel  "Opel Astra" ;
+        skos:prefLabel    "Opel Astra" .
+
+<urn:concept:24>  a       skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:27> ;
+        skos:hiddenLabel  "Final" , "final" ;
+        skos:prefLabel    "Final" .
+
+<urn:concept:9>  a        <urn:type:14> , owl:NamedIndividual ;
+        skos:hiddenLabel  "2020" ;
+        skos:prefLabel    "2020" .
+
+<urn:concept:3>  a        <urn:type:14> , owl:NamedIndividual ;
+        skos:hiddenLabel  "2018" ;
+        skos:prefLabel    "2018" .
+
+<urn:concept:14>  a       skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:12> , <urn:concept:wn72984> ;
+        skos:hiddenLabel  "invoice" , "Invoice" ;
+        skos:prefLabel    "Invoice" .
+
+<urn:concept:23>  a       skos:Concept , owl:NamedIndividual ;
+        skos:broader      <urn:concept:12> ;
+        skos:hiddenLabel  "Proposal" , "proposal" ;
+        skos:prefLabel    "Proposal" .
+
+<urn:concept:13>  a       skos:Concept , owl:NamedIndividual ;
+        skos:hiddenLabel  "Car Repair" , "Car repair" ;
+        skos:prefLabel    "Car Repair" .
+
+<urn:concept:8>  a        <urn:type:8> , owl:NamedIndividual ;
+        skos:hiddenLabel  "Kaiserslautern tax office" , "Kaiserslautern Tax Office" ;
+        skos:prefLabel    "Kaiserslautern Tax Office" .
+
+<urn:concept:19>  a       <urn:type:10> , owl:NamedIndividual ;
+        skos:hiddenLabel  "Zenphase" ;
+        skos:prefLabel    "Zenphase" .
