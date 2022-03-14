@@ -6,3 +6,4 @@ nbactions.xml
 results
 tdb
 users.csv
+deploy-dist.sh

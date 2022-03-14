@@ -22,7 +22,7 @@ import org.apache.jena.rdf.model.ModelFactory;
  */
 public class KecsApp {
     
-    public static final String VERSION = "2022-03-02";
+    public static final String VERSION = "2022-03-14";
     
     public static Model creator = ModelFactory.createDefaultModel();
     
