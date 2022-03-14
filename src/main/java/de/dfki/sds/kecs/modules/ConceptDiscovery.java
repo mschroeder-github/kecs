@@ -139,7 +139,7 @@ public class ConceptDiscovery extends Module {
                 //change it if nesessary (this if avoids the notification recursion)
                 if(topicAssertion.getRating() != assertion.getRating()) {
                     pool.assertStatement(topicAssertion.getStatement(), topicAssertion.getPhase(), 
-                            topicAssertion.getIntelligence(), topicAssertion.getName(), assertion.getRating(), conf);
+                            Intelligence.AI, aiName, assertion.getRating(), conf); //topicAssertion.getIntelligence(), topicAssertion.getName()
                 }
             }
             
@@ -149,7 +149,7 @@ public class ConceptDiscovery extends Module {
                 if((sameAsAssertion.getSubject().equals(assertion.getSubject()) || sameAsAssertion.getObject().equals(assertion.getSubject())) &&
                    sameAsAssertion.getRating() != assertion.getRating()) {
                     pool.assertStatement(sameAsAssertion.getStatement(), sameAsAssertion.getPhase(), 
-                            sameAsAssertion.getIntelligence(), sameAsAssertion.getName(), assertion.getRating(), conf);
+                            Intelligence.AI, aiName, assertion.getRating(), conf); //sameAsAssertion.getIntelligence(), sameAsAssertion.getName()
                 }
             }
             
@@ -159,7 +159,7 @@ public class ConceptDiscovery extends Module {
                 if((broaderAssertion.getSubject().equals(assertion.getSubject()) || broaderAssertion.getObject().equals(assertion.getSubject())) &&
                    broaderAssertion.getRating() != assertion.getRating()) {
                     pool.assertStatement(broaderAssertion.getStatement(), broaderAssertion.getPhase(), 
-                            broaderAssertion.getIntelligence(), broaderAssertion.getName(), assertion.getRating(), conf);
+                            Intelligence.AI, aiName, assertion.getRating(), conf); //broaderAssertion.getIntelligence(), broaderAssertion.getName(),
                 }
             }
             
@@ -169,7 +169,7 @@ public class ConceptDiscovery extends Module {
                 if((nonTaxAssertion.getSubject().equals(assertion.getSubject()) || nonTaxAssertion.getObject().equals(assertion.getSubject())) &&
                    nonTaxAssertion.getRating() != assertion.getRating()) {
                     pool.assertStatement(nonTaxAssertion.getStatement(), nonTaxAssertion.getPhase(), 
-                            nonTaxAssertion.getIntelligence(), nonTaxAssertion.getName(), assertion.getRating(), conf);
+                            Intelligence.AI, aiName, assertion.getRating(), conf); //nonTaxAssertion.getIntelligence(), nonTaxAssertion.getName()
                 }
             }
         }
