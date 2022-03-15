@@ -17,6 +17,8 @@ In all cases a folder is created that stores your feedback progress.
 Since bootstrapping could overwrite already established progress, you have to specify an output folder that
 does not exist yet.
 
+A pre-built JAR can be downloaded here: [kecs.jar](https://www.dfki.uni-kl.de/~mschroeder/demo/kecs/data/kecs.jar) (ca. 80 MB).
+
 ### Try out the Demo
 
 Before using the tool on real data, you can try out a demo filesystem to learn how to use the application.
